@@ -104,13 +104,18 @@
                     <i class="fa-solid fa-user-plus"></i> <span class="hidden sm:inline">Nuovo Socio</span>
                 </button>
                 <div class="relative">
-                    <button type="button" onclick="toggleDropdown(event)" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm transition">
+                    <button type="button" onclick="toggleDropdown(event)" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm transition border border-slate-700">
                         <i class="fa-solid fa-file-arrow-down"></i> <span class="hidden md:inline">Report & Dati</span> <i class="fa-solid fa-chevron-down text-xs ml-0.5"></i>
                     </button>
                     <div id="dropdownMenu" class="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 py-1 hidden z-50 text-slate-700">
                         <button onclick="printReport(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"><i class="fa-solid fa-print text-slate-600"></i> Stampa Report</button>
                         <button onclick="exportCSV(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"><i class="fa-solid fa-file-excel text-emerald-600"></i> Esporta Excel</button>
+                        <hr class="my-1 border-slate-100">
                         <button onclick="exportData(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"><i class="fa-solid fa-database text-medical-600"></i> Backup JSON</button>
+                        <label class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-upload text-tealmed-600"></i> Importa JSON
+                            <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event); closeDropdown();">
+                        </label>
                     </div>
                 </div>
                 <button onclick="logoutUser()" class="bg-slate-800 hover:bg-rose-900/50 text-slate-300 hover:text-white px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm transition"><i class="fa-solid fa-right-from-bracket"></i></button>
@@ -136,7 +141,7 @@
         <!-- DASHBOARD VIEW -->
         <div id="view-dashboard" class="space-y-6">
             
-            <!-- Welcome Banner (Ripristinato) -->
+            <!-- Welcome Banner -->
             <div class="bg-gradient-to-r from-medical-900 to-slate-900 rounded-2xl p-5 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div class="absolute right-0 bottom-0 translate-x-10 translate-y-10 opacity-10 pointer-events-none">
                     <i class="fa-solid fa-heart-pulse text-9xl"></i>
@@ -153,7 +158,7 @@
                 </div>
             </div>
 
-            <!-- Stats Grid (Ripristinata con 4 Card) -->
+            <!-- Stats Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                 <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
                     <div>
@@ -283,6 +288,12 @@
                 </div>
             </div>
 
+            <!-- Print Title -->
+            <div class="hidden print:block mb-4 text-center">
+                <h2 class="text-2xl font-bold">Chinesi Center - Report Elenco Soci & Scadenze</h2>
+                <p class="text-xs text-slate-600">Generato il <span id="printDate"></span></p>
+            </div>
+
             <!-- Soci Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
                 <div class="overflow-x-auto">
@@ -321,7 +332,6 @@
             
             <form id="socioForm" onsubmit="saveSocio(event)" class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
                 <input type="hidden" id="socioId">
-                <!-- Salva la DATA in cui è stata inviata l'email -->
                 <input type="hidden" id="dataInvioAvvisoCertificato" value=""> 
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -370,11 +380,10 @@
             projectId: "chinesi-center-gestionale"
         };
 
-        // --- CONFIGURAZIONE EMAILJS ---
-        // L'ID del servizio è stato inserito, ma per funzionare devi inserire la Public Key e il Template ID creati su EmailJS.
+        // --- CONFIGURAZIONE EMAILJS (Dati Inseriti) ---
         const EMAILJS_SERVICE_ID = "service_t1rovq9";
-        const EMAILJS_PUBLIC_KEY = "INSERISCI_QUI_LA_TUA_PUBLIC_KEY"; 
-        const EMAILJS_TEMPLATE_ID = "INSERISCI_QUI_IL_TEMPLATE_ID";
+        const EMAILJS_PUBLIC_KEY = "vHtINp_1fBRodY8Pp"; 
+        const EMAILJS_TEMPLATE_ID = "template_zw8by5a";
         
         let db = null;
         let auth = null;
@@ -386,8 +395,7 @@
             db = firebase.firestore();
             auth = firebase.auth();
 
-            // Inizializza EmailJS
-            if(EMAILJS_PUBLIC_KEY !== "INSERISCI_QUI_LA_TUA_PUBLIC_KEY"){
+            if(EMAILJS_PUBLIC_KEY) {
                 emailjs.init(EMAILJS_PUBLIC_KEY);
             }
 
@@ -425,45 +433,39 @@
                 
                 renderDashboard();
                 renderSociTable();
-                
-                // Dopo aver caricato i dati, esegue il check automatico per l'invio delle email
                 checkScadenzeAndSendEmails();
 
             }, (error) => { console.error("Firestore error:", error); });
         }
 
-        // --- FUNZIONE CENTRALE PER INVIO EMAIL AUTOMATICO ---
+        // --- INVIO EMAIL AUTOMATICO ---
         function checkScadenzeAndSendEmails() {
-            if(EMAILJS_PUBLIC_KEY === "INSERISCI_QUI_LA_TUA_PUBLIC_KEY") return; // Sicurezza se non configurato
+            if(!EMAILJS_PUBLIC_KEY) return; 
 
             const todayStr = new Date().toISOString().split('T')[0];
 
             window.soci.forEach(socio => {
-                // Se la mail non c'è, o se l'abbiamo GIA' inviata (c'è una data salvata), saltiamo il socio.
+                // Se non c'è email o l'email è GIÀ stata inviata, saltiamo.
                 if (!socio.email || socio.dataInvioAvvisoCertificato) return;
 
                 const medStat = getDateStatus(socio.scadenzaCertificato);
 
-                // Controlla se la scadenza è ENTRO i 30 giorni (e non è ancora scaduto)
+                // Controlla se la scadenza è ENTRO 30 giorni (e > 0, cioè non scaduto)
                 if (medStat.status === 'expiring' && medStat.days <= 30 && medStat.days >= 0) {
                     
-                    // Prepara i dati per EmailJS (assicurati che il tuo template abbia queste variabili)
                     const templateParams = {
                         to_email: socio.email,
                         to_name: socio.nome + ' ' + socio.cognome,
                         data_scadenza: formatDateIT(socio.scadenzaCertificato)
                     };
 
-                    // Invia la Mail
                     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
                         .then(function(response) {
-                            console.log('Email inviata con successo a:', socio.email);
-                            
-                            // Aggiorna Firestore: salva la data odierna come data di invio dell'avviso
+                            console.log('Email inviata a:', socio.email);
+                            // Aggiorna Firestore: salva data invio
                             db.collection('soci').doc(socio.id).update({
                                 dataInvioAvvisoCertificato: todayStr
                             });
-
                         }, function(error) {
                             console.error('Errore invio EmailJS per', socio.email, error);
                         });
@@ -526,9 +528,8 @@
 
             let medExpiredList = []; 
             let medExpiringList = [];
-            let emailSentList = []; // Array per il log
+            let emailSentList = []; 
             
-            // Variabili per i contatori delle card
             let activeSubCount = 0;
             let expiredTotalCount = 0;
 
@@ -537,31 +538,23 @@
                 const subStat = getDateStatus(s.scadenzaAbbonamento);
                 const cardStat = getDateStatus(s.scadenzaTessera);
                 
-                // Popolamento Contatori Card Superiori
                 if (subStat.status === 'active') activeSubCount++;
                 if (subStat.status === 'expired' || cardStat.status === 'expired') expiredTotalCount++;
 
-                // Popolamento Box Certificati
                 if (medStat.status === 'expired') { medExpiredList.push({ socio: s, stat: medStat }); } 
                 else if (medStat.status === 'expiring') { medExpiringList.push({ socio: s, stat: medStat }); }
 
-                // Raccoglie chi ha ricevuto la mail per il log
-                if (s.dataInvioAvvisoCertificato) {
-                    emailSentList.push(s);
-                }
+                if (s.dataInvioAvvisoCertificato) { emailSentList.push(s); }
             });
 
-            // Aggiorna le 4 Card delle Statistiche
             document.getElementById('stat-total').innerText = window.soci.length;
             document.getElementById('stat-active-sub').innerText = activeSubCount;
             document.getElementById('stat-expiring-med').innerText = medExpiringList.length;
             document.getElementById('stat-expired-total').innerText = expiredTotalCount;
 
-            // Aggiorna Badge Liste Notifiche
             document.getElementById('badge-alert-med-expired').innerText = medExpiredList.length;
             document.getElementById('badge-alert-med-expiring').innerText = medExpiringList.length;
 
-            // Render Scaduti
             if (medExpiredList.length === 0) {
                 alertMedExpired.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato scaduto.</p>`;
             } else {
@@ -575,12 +568,10 @@
                 });
             }
 
-            // Render In Scadenza (30 gg)
             if (medExpiringList.length === 0) {
                 alertMedExpiring.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato in scadenza nei prossimi 30 giorni.</p>`;
             } else {
                 medExpiringList.forEach(item => {
-                    // Se la mail è stata inviata, mostriamo una piccola icona verde di fianco al nome
                     const mailInviataIcon = item.socio.dataInvioAvvisoCertificato 
                         ? `<i class="fa-solid fa-envelope-circle-check text-emerald-500 ml-1" title="Email inviata"></i>` 
                         : ``;
@@ -594,7 +585,6 @@
                 });
             }
 
-            // Render LOG Email Inviate
             if (emailSentList.length === 0) {
                 logEmailContainer.parentElement.classList.add('hidden');
                 emptyLogState.classList.remove('hidden');
@@ -602,7 +592,6 @@
                 logEmailContainer.parentElement.classList.remove('hidden');
                 emptyLogState.classList.add('hidden');
                 
-                // Ordina le mail inviate dalla più recente alla più vecchia
                 emailSentList.sort((a, b) => new Date(b.dataInvioAvvisoCertificato) - new Date(a.dataInvioAvvisoCertificato));
 
                 emailSentList.forEach(socio => {
@@ -629,8 +618,7 @@
             
             const filtered = window.soci.filter(s => {
                 const fullName = `${s.nome} ${s.cognome}`.toLowerCase();
-                const matchesSearch = fullName.includes(searchVal);
-                return matchesSearch; 
+                return fullName.includes(searchVal); 
             });
 
             filtered.forEach(s => {
@@ -655,7 +643,7 @@
         window.openModal = function() {
             document.getElementById('socioId').value = '';
             document.getElementById('socioForm').reset();
-            document.getElementById('dataInvioAvvisoCertificato').value = ''; // Reset date per nuovi soci
+            document.getElementById('dataInvioAvvisoCertificato').value = ''; 
             document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-user-plus text-tealmed-500"></i> Aggiungi Nuovo Socio`;
             document.getElementById('socioModal').classList.remove('hidden');
         };
@@ -673,8 +661,6 @@
             document.getElementById('scadenzaTessera').value = socio.scadenzaTessera || '';
             document.getElementById('scadenzaCertificato').value = socio.scadenzaCertificato || '';
             document.getElementById('scadenzaAbbonamento').value = socio.scadenzaAbbonamento || '';
-            
-            // Riprendiamo la data di invio della mail, se esiste
             document.getElementById('dataInvioAvvisoCertificato').value = socio.dataInvioAvvisoCertificato || '';
 
             document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-user-pen text-tealmed-500"></i> Modifica Dati Socio`;
@@ -688,13 +674,12 @@
             const id = document.getElementById('socioId').value;
             const newScadenzaCertificato = document.getElementById('scadenzaCertificato').value;
             
-            // Gestione RESET automatico dell'email inviata:
-            // Se aggiorni la data di scadenza del certificato, il sistema resetta il log dell'email, preparandosi al nuovo anno.
+            // Gestione RESET automatico dell'email:
             let avvisoData = document.getElementById('dataInvioAvvisoCertificato').value;
             if (id) {
                 const oldSocio = window.soci.find(s => s.id === id);
                 if (oldSocio && oldSocio.scadenzaCertificato !== newScadenzaCertificato) {
-                    avvisoData = ""; // Scadenza cambiata, log resettato!
+                    avvisoData = ""; // Scadenza cambiata, log resettato per il nuovo certificato
                 }
             }
 
@@ -709,7 +694,7 @@
                 scadenzaTessera: document.getElementById('scadenzaTessera').value,
                 scadenzaCertificato: newScadenzaCertificato,
                 scadenzaAbbonamento: document.getElementById('scadenzaAbbonamento').value,
-                dataInvioAvvisoCertificato: avvisoData // Salva la data (o il reset)
+                dataInvioAvvisoCertificato: avvisoData
             };
 
             persistSocio(socioData);
@@ -723,6 +708,96 @@
             document.getElementById('toastIcon').innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
             toast.classList.remove('translate-y-20', 'opacity-0');
             setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3500);
+        };
+
+        // --- GESTIONE MENU A TENDINA E ESPORTAZIONI DATI ---
+        
+        window.toggleDropdown = function(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('dropdownMenu');
+            if (menu) menu.classList.toggle('hidden');
+        };
+
+        window.closeDropdown = function() {
+            const menu = document.getElementById('dropdownMenu');
+            if (menu) menu.classList.add('hidden');
+        };
+
+        window.addEventListener('click', function(e) {
+            const menu = document.getElementById('dropdownMenu');
+            if (menu && !menu.contains(e.target)) { menu.classList.add('hidden'); }
+        });
+
+        window.printReport = function() {
+            const printDateEl = document.getElementById('printDate');
+            if (printDateEl) printDateEl.innerText = new Date().toLocaleDateString('it-IT');
+            window.print();
+        };
+
+        window.exportCSV = function() {
+            let csvContent = "\uFEFFCognome;Nome;Data Nascita;Codice Fiscale;Telefono;Email;Scadenza Tessera;Scadenza Certificato;Scadenza Abbonamento\n";
+            window.soci.forEach(s => {
+                const row = [
+                    `"${(s.cognome || '').replace(/"/g, '""')}"`,
+                    `"${(s.nome || '').replace(/"/g, '""')}"`,
+                    `"${formatDateIT(s.dataNascita) || ''}"`,
+                    `"${(s.codiceFiscale || '').toUpperCase()}"`,
+                    `"${s.telefono || ''}"`,
+                    `"${s.email || ''}"`,
+                    `"${formatDateIT(s.scadenzaTessera) || ''}"`,
+                    `"${formatDateIT(s.scadenzaCertificato) || ''}"`,
+                    `"${formatDateIT(s.scadenzaAbbonamento) || ''}"`
+                ];
+                csvContent += row.join(";") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "chinesi_center_soci_" + new Date().toISOString().split('T')[0] + ".csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast("File CSV esportato con successo!");
+        };
+
+        window.exportData = function() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.soci, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "chinesi_center_backup_" + new Date().toISOString().split('T')[0] + ".json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Backup JSON esportato con successo!");
+        };
+
+        window.importData = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        window.soci = imported;
+                        if (isFirebaseConnected && db) {
+                            for (let s of window.soci) {
+                                await db.collection('soci').doc(s.id).set(s);
+                            }
+                        }
+                        renderDashboard();
+                        renderSociTable();
+                        showToast("Database importato con successo!");
+                    } else {
+                        showToast("File JSON non valido.");
+                    }
+                } catch(err) {
+                    showToast("Errore durante la lettura del file JSON.");
+                }
+            };
+            reader.readAsText(file);
         };
 
         window.onload = function() { initFirebase(); };
