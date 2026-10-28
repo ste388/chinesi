@@ -1,4 +1,4 @@
-const CACHE_NAME = 'Chinesi-v3';
+const CACHE_NAME = 'Chinesi-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -8,14 +8,14 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (evt) => {
+  self.skipWaiting();
   evt.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS).catch(err => {
-        console.warn('Errore caricamento cache asset:', err);
+        console.warn('Cache asset non caricata:', err);
       });
     })
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (evt) => {
