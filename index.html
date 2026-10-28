@@ -220,7 +220,6 @@
 
                 <!-- BOX 2: CERTIFICATI MEDICI IN SCADENZA (30 GIORNI) -->
                 <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 relative">
-                    <!-- Icona Email Auto -->
                     <div class="absolute top-4 right-4 text-[10px] bg-medical-50 text-medical-700 px-2 py-1 rounded-full border border-medical-200 flex items-center gap-1" title="Le email partono all'apertura del gestionale">
                         <i class="fa-solid fa-paper-plane"></i> Automazione Attiva
                     </div>
@@ -380,7 +379,7 @@
             projectId: "chinesi-center-gestionale"
         };
 
-        // --- CONFIGURAZIONE EMAILJS (Dati Inseriti) ---
+        // --- CONFIGURAZIONE EMAILJS ---
         const EMAILJS_SERVICE_ID = "service_t1rovq9";
         const EMAILJS_PUBLIC_KEY = "vHtINp_1fBRodY8Pp"; 
         const EMAILJS_TEMPLATE_ID = "template_zw8by5a";
@@ -389,6 +388,25 @@
         let auth = null;
         let isFirebaseConnected = false;
         window.soci = [];
+
+        // GESTIONE CONNESSIONE E STATO
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        function updateNetworkStatus() {
+            const syncStatusEl = document.getElementById('syncStatus');
+            if (!syncStatusEl) return;
+            
+            if (navigator.onLine) {
+                if (auth && auth.currentUser) {
+                    syncStatusEl.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i> Cloud Attivo`;
+                    syncStatusEl.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800 text-emerald-300 text-[10px] shrink-0 border border-slate-700";
+                }
+            } else {
+                syncStatusEl.innerHTML = `<i class="fa-solid fa-wifi-slash text-amber-400"></i> Offline`;
+                syncStatusEl.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 text-[10px] shrink-0 border border-amber-800";
+            }
+        }
 
         function initFirebase() {
             if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
@@ -403,11 +421,14 @@
                 if (user) {
                     document.getElementById('authScreen').classList.add('hidden');
                     isFirebaseConnected = true;
+                    updateNetworkStatus(); // Forza aggiornamento scritta stato connessione
                     setupFirestoreListener();
                 } else {
                     document.getElementById('authScreen').classList.remove('hidden');
                 }
             });
+            
+            updateNetworkStatus();
         }
 
         async function handleAuth(event) {
@@ -431,11 +452,17 @@
                 snapshot.forEach(docSnap => { loaded.push({ id: docSnap.id, ...docSnap.data() }); });
                 window.soci = loaded;
                 
+                updateNetworkStatus(); // Conferma connessione attiva
                 renderDashboard();
                 renderSociTable();
+                
                 checkScadenzeAndSendEmails();
 
-            }, (error) => { console.error("Firestore error:", error); });
+            }, (error) => { 
+                console.error("Firestore error:", error); 
+                const syncStatusEl = document.getElementById('syncStatus');
+                syncStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Errore Sync`;
+            });
         }
 
         // --- INVIO EMAIL AUTOMATICO ---
@@ -468,6 +495,8 @@
                             });
                         }, function(error) {
                             console.error('Errore invio EmailJS per', socio.email, error);
+                            // Mostra errore a schermo
+                            showToast("Errore invio Email a " + socio.nome + " (Controlla template EmailJS)", "error");
                         });
                 }
             });
@@ -674,7 +703,6 @@
             const id = document.getElementById('socioId').value;
             const newScadenzaCertificato = document.getElementById('scadenzaCertificato').value;
             
-            // Gestione RESET automatico dell'email:
             let avvisoData = document.getElementById('dataInvioAvvisoCertificato').value;
             if (id) {
                 const oldSocio = window.soci.find(s => s.id === id);
@@ -702,10 +730,18 @@
             showToast("Socio salvato con successo!");
         };
 
-        window.showToast = function(message) {
+        window.showToast = function(message, type = "success") {
             const toast = document.getElementById('toast');
             document.getElementById('toastMessage').innerText = message;
-            document.getElementById('toastIcon').innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+            
+            if(type === "error") {
+                document.getElementById('toastIcon').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-500"></i>`;
+                toast.children[0].classList.add("border-rose-800");
+            } else {
+                document.getElementById('toastIcon').innerHTML = `<i class="fa-solid fa-circle-check text-tealmed-500"></i>`;
+                toast.children[0].classList.remove("border-rose-800");
+            }
+
             toast.classList.remove('translate-y-20', 'opacity-0');
             setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3500);
         };
@@ -791,10 +827,10 @@
                         renderSociTable();
                         showToast("Database importato con successo!");
                     } else {
-                        showToast("File JSON non valido.");
+                        showToast("File JSON non valido.", "error");
                     }
                 } catch(err) {
-                    showToast("Errore durante la lettura del file JSON.");
+                    showToast("Errore durante la lettura del file JSON.", "error");
                 }
             };
             reader.readAsText(file);
