@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chinesi Center - Gestionale Palestra & Chinesiologia</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -11,44 +12,33 @@
             theme: {
                 extend: {
                     colors: {
-                        medical: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                        },
-                        tealmed: {
-                            50: '#f0fdf4',
-                            500: '#14b8a6',
-                            600: '#0d9488',
-                            700: '#0f766e',
-                        }
+                        medical: { 50: '#f0f9ff', 100: '#e0f2fe', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
+                        tealmed: { 50: '#f0fdf4', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e' }
                     }
                 }
             }
         }
     </script>
+    
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- PWA Manifest per Installazione Desktop -->
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        
+    <!-- PWA Manifest -->
     <link rel="manifest" id="pwa-manifest">
 
-    <!-- Firebase App & Auth & Firestore Compat SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase Compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <!-- EmailJS SDK per invio Email automatiche -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; }
-        
-        /* Print Optimizations */
         @media print {
             body { background: white !important; color: black !important; }
             header, nav, .no-print, button, .dropdown-menu { display: none !important; }
@@ -57,42 +47,33 @@
             .shadow-sm, .shadow-2xl, .border { box-shadow: none !important; border: none !important; }
             table { width: 100% !important; border-collapse: collapse !important; font-size: 11px !important; }
             th, td { border: 1px solid #cbd5e1 !important; padding: 6px 8px !important; }
-            tr { page-break-inside: avoid; }
         }
     </style>
 </head>
 <body class="h-full flex flex-col text-slate-800">
 
-    <!-- AUTHENTICATION SCREEN (Hidden by default, shown if not logged in) -->
+    <!-- AUTHENTICATION SCREEN -->
     <div id="authScreen" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 p-8 space-y-6">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 p-6 sm:p-8 space-y-6">
             <div class="text-center space-y-2">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-medical-600 to-tealmed-500 flex items-center justify-center shadow-lg shadow-tealmed-500/20 mx-auto">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-medical-600 to-tealmed-500 flex items-center justify-center shadow-lg mx-auto">
                     <i class="fa-solid fa-heart-pulse text-white text-3xl"></i>
                 </div>
                 <h2 class="text-2xl font-bold text-slate-900">Chinesi Center</h2>
                 <p class="text-xs text-slate-500">Accedi con le tue credenziali per gestire il database</p>
             </div>
 
-            <!-- Tabs Login / Registrazione -->
-            <div class="flex rounded-xl bg-slate-100 p-1 text-sm font-medium mb-4">
-                <button type="button" onclick="setAuthMode('login')" id="tabLogin" class="flex-1 py-2 rounded-lg bg-white text-slate-900 shadow-sm transition font-bold text-xs uppercase tracking-wider">Accedi</button>
-                <button type="button" onclick="setAuthMode('register')" id="tabRegister" class="flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-700 transition font-bold text-xs uppercase tracking-wider">Registrati</button>
-            </div>
-
-            <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4">
+            <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4 pt-2">
                 <div>
                     <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Email</label>
-                    <input type="email" id="authEmail" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600" placeholder="admin@chinesicenter.it">
+                    <input type="email" id="authEmail" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600" placeholder="info@chinesicenter.it">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Password</label>
-                    <input type="password" id="authPassword" required minlength="6" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600" placeholder="••••••••">
+                    <input type="password" id="authPassword" required minlength="6" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600" placeholder="••••••••">
                 </div>
-
                 <div id="authError" class="text-xs text-rose-600 font-medium hidden"></div>
-
-                <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-medical-600 hover:bg-medical-700 text-white font-medium text-sm transition shadow-lg shadow-medical-600/20">
+                <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-medical-600 hover:bg-medical-700 text-white font-medium text-sm transition shadow-lg">
                     Accedi al Gestionale
                 </button>
             </form>
@@ -101,172 +82,176 @@
 
     <!-- Header / Navbar -->
     <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 shrink-0 no-print">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-medical-600 to-tealmed-500 flex items-center justify-center shadow-lg shadow-tealmed-500/20">
-                    <i class="fa-solid fa-heart-pulse text-white text-2xl"></i>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-0 sm:h-20 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-2.5 sm:space-x-3">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-medical-600 to-tealmed-500 flex items-center justify-center shadow-lg shrink-0">
+                    <i class="fa-solid fa-heart-pulse text-white text-xl sm:text-2xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                        CHINESI CENTER
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-medical-800 text-medical-100 font-medium">Verolanuova</span>
-                    </h1>
-                    <p class="text-xs text-slate-400 flex items-center gap-2">
-                        <span>Centro di Chinesiologia & Palestra</span>
-                        <span id="syncStatus" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base sm:text-xl font-bold tracking-tight text-white whitespace-nowrap">CHINESI CENTER</h1>
+                    </div>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="syncStatus" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] shrink-0">
                             <i class="fa-solid fa-cloud text-amber-400"></i> Connessione in corso...
                         </span>
-                    </p>
+                    </div>
                 </div>
             </div>
             
-            <!-- Quick Actions & Navigation -->
-            <div class="flex items-center space-x-3">
-                <button onclick="openModal()" class="inline-flex items-center gap-2 bg-tealmed-600 hover:bg-tealmed-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition shadow-sm hover:shadow">
-                    <i class="fa-solid fa-user-plus"></i>
-                    <span class="hidden sm:inline">Nuovo Socio</span>
+            <div class="flex items-center space-x-2 sm:space-x-3 shrink-0 ml-auto sm:ml-0">
+                <button onclick="openModal()" class="inline-flex items-center gap-1.5 bg-tealmed-600 hover:bg-tealmed-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm transition">
+                    <i class="fa-solid fa-user-plus"></i> <span class="hidden sm:inline">Nuovo Socio</span>
                 </button>
                 <div class="relative">
-                    <button type="button" onclick="toggleDropdown(event)" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2.5 rounded-xl font-medium text-sm transition border border-slate-700">
-                        <i class="fa-solid fa-file-arrow-down"></i>
-                        <span class="hidden md:inline">Report & Dati</span>
-                        <i class="fa-solid fa-chevron-down text-xs ml-1"></i>
+                    <button type="button" onclick="toggleDropdown(event)" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm transition">
+                        <i class="fa-solid fa-file-arrow-down"></i> <span class="hidden md:inline">Report & Dati</span> <i class="fa-solid fa-chevron-down text-xs ml-0.5"></i>
                     </button>
                     <div id="dropdownMenu" class="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 py-1 hidden z-50 text-slate-700">
-                        <button onclick="printReport(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
-                            <i class="fa-solid fa-print text-slate-600"></i> Stampa Report Iscritti
-                        </button>
-                        <button onclick="exportCSV(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
-                            <i class="fa-solid fa-file-excel text-emerald-600"></i> Esporta Excel (CSV)
-                        </button>
-                        <hr class="my-1 border-slate-100">
-                        <button onclick="exportData(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
-                            <i class="fa-solid fa-database text-medical-600"></i> Esporta Backup JSON
-                        </button>
-                        <label class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2 cursor-pointer">
-                            <i class="fa-solid fa-upload text-tealmed-600"></i> Importa JSON
-                            <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event); closeDropdown();">
-                        </label>
+                        <button onclick="printReport(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"><i class="fa-solid fa-print text-slate-600"></i> Stampa Report</button>
+                        <button onclick="exportCSV(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"><i class="fa-solid fa-file-excel text-emerald-600"></i> Esporta Excel</button>
+                        <button onclick="exportData(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"><i class="fa-solid fa-database text-medical-600"></i> Backup JSON</button>
                     </div>
                 </div>
-                <button onclick="logoutUser()" title="Esci" class="bg-slate-800 hover:bg-rose-900/50 text-slate-300 hover:text-white px-3 py-2.5 rounded-xl text-sm transition border border-slate-700">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
+                <button onclick="logoutUser()" class="bg-slate-800 hover:bg-rose-900/50 text-slate-300 hover:text-white px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm transition"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </header>
 
     <!-- Main Navigation Tabs -->
     <nav class="bg-white border-b border-slate-200 shrink-0 no-print">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-8">
-            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-4 px-1 border-b-2 font-medium text-sm border-medical-600 text-medical-700 flex items-center gap-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-4 sm:space-x-8">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3.5 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm border-medical-600 text-medical-700 flex items-center gap-1.5 sm:gap-2">
                 <i class="fa-solid fa-chart-pie"></i> Dashboard & Scadenze
             </button>
-            <button onclick="switchTab('soci')" id="tab-soci" class="py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 flex items-center gap-2">
+            <button onclick="switchTab('soci')" id="tab-soci" class="py-3.5 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-1.5 sm:gap-2">
                 <i class="fa-solid fa-users"></i> Anagrafica Soci
             </button>
         </div>
     </nav>
 
     <!-- Content Body -->
-    <main class="flex-1 overflow-y-auto max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="flex-1 overflow-y-auto max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         
         <!-- DASHBOARD VIEW -->
         <div id="view-dashboard" class="space-y-6">
-            <!-- Welcome Banner -->
-            <div class="bg-gradient-to-r from-medical-900 to-slate-900 rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            
+            <!-- Welcome Banner (Ripristinato) -->
+            <div class="bg-gradient-to-r from-medical-900 to-slate-900 rounded-2xl p-5 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div class="absolute right-0 bottom-0 translate-x-10 translate-y-10 opacity-10 pointer-events-none">
                     <i class="fa-solid fa-heart-pulse text-9xl"></i>
                 </div>
                 <div class="relative z-10">
-                    <span class="bg-medical-800 text-medical-100 text-xs px-3 py-1 rounded-full font-semibold uppercase tracking-wider">Centro Chinesiologico Verolanuova</span>
-                    <h2 class="text-2xl md:text-3xl font-bold mt-2">Benvenuto nel Gestionale Chinesi Center</h2>
-                    <p class="text-slate-300 text-sm mt-1 max-w-2xl">Monitora lo stato di salute dei tuoi abbonamenti, tessere associative e certificati medici in tempo reale.</p>
+                    <span class="bg-medical-800 text-medical-100 text-[10px] sm:text-xs px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider">Centro Chinesiologico</span>
+                    <h2 class="text-xl sm:text-3xl font-bold mt-2">Benvenuto nel Gestionale Chinesi Center</h2>
+                    <p class="text-slate-300 text-xs sm:text-sm mt-1 max-w-2xl">Monitora lo stato di salute dei tuoi abbonamenti, tessere associative e certificati medici in tempo reale.</p>
                 </div>
-                <div class="relative z-10 flex gap-3">
-                    <button onclick="switchTab('soci')" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-xl text-sm font-medium transition backdrop-blur-sm">
+                <div class="relative z-10 flex gap-3 w-full sm:w-auto">
+                    <button onclick="switchTab('soci')" class="w-full sm:w-auto text-center bg-white/10 hover:bg-white/20 text-white border border-white/20 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition backdrop-blur-sm">
                         Visualizza Tutti i Soci
                     </button>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <!-- Stat 1: Total Members -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
+            <!-- Stats Grid (Ripristinata con 4 Card) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Soci Totali</p>
-                        <h3 id="stat-total" class="text-3xl font-bold text-slate-900 mt-1">0</h3>
+                        <p class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Soci Totali</p>
+                        <h3 id="stat-total" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">0</h3>
                         <p class="text-xs text-slate-500 mt-1"><span class="text-tealmed-600 font-medium">Registrati</span> nel sistema</p>
                     </div>
-                    <div class="w-14 h-14 rounded-2xl bg-medical-50 text-medical-600 flex items-center justify-center text-2xl">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-medical-50 text-medical-600 flex items-center justify-center text-xl sm:text-2xl">
                         <i class="fa-solid fa-users"></i>
                     </div>
                 </div>
 
-                <!-- Stat 2: Active Subscriptions -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Abbonamenti Attivi</p>
-                        <h3 id="stat-active-sub" class="text-3xl font-bold text-emerald-600 mt-1">0</h3>
+                        <p class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Abbonamenti Attivi</p>
+                        <h3 id="stat-active-sub" class="text-2xl sm:text-3xl font-bold text-emerald-600 mt-1">0</h3>
                         <p class="text-xs text-slate-500 mt-1">In corso di validità</p>
                     </div>
-                    <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl sm:text-2xl">
                         <i class="fa-solid fa-id-card-clip"></i>
                     </div>
                 </div>
 
-                <!-- Stat 3: Expiring Certificates -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Certificati in Scadenza</p>
-                        <h3 id="stat-expiring-med" class="text-3xl font-bold text-amber-500 mt-1">0</h3>
+                        <p class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Certificati in Scadenza</p>
+                        <h3 id="stat-expiring-med" class="text-2xl sm:text-3xl font-bold text-amber-500 mt-1">0</h3>
                         <p class="text-xs text-slate-500 mt-1">Nei prossimi 30 giorni</p>
                     </div>
-                    <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl sm:text-2xl">
                         <i class="fa-solid fa-file-medical"></i>
                     </div>
                 </div>
 
-                <!-- Stat 4: Expired Cards / Alerts -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Scadenze Critiche</p>
-                        <h3 id="stat-expired-total" class="text-3xl font-bold text-rose-600 mt-1">0</h3>
+                        <p class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Scadenze Critiche</p>
+                        <h3 id="stat-expired-total" class="text-2xl sm:text-3xl font-bold text-rose-600 mt-1">0</h3>
                         <p class="text-xs text-slate-500 mt-1">Tessere o abbonamenti scaduti</p>
                     </div>
-                    <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-2xl">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl sm:text-2xl">
                         <i class="fa-solid fa-triangle-exclamation"></i>
                     </div>
                 </div>
             </div>
 
-            <!-- Urgent Alerts Section -->
+            <!-- Box Notifiche: Certificati Scaduti e In Scadenza -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Certificati in scadenza o scaduti -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
+                <!-- BOX 1: CERTIFICATI MEDICI SCADUTI -->
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-stethoscope text-amber-500"></i> Certificati Medici (In Scadenza / Scaduti)
+                        <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-file-circle-xmark text-rose-500"></i> Certificati Medici Scaduti
                         </h3>
-                        <span id="badge-alert-med" class="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-semibold">0</span>
+                        <span id="badge-alert-med-expired" class="text-xs px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 font-semibold">0</span>
                     </div>
-                    <div id="list-alert-med" class="space-y-3 max-h-72 overflow-y-auto pr-1">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div id="list-alert-med-expired" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- Abbonamenti o Tessere in scadenza / scaduti -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-clock-rotate-left text-rose-500"></i> Abbonamenti & Tessere in Scadenza
+                <!-- BOX 2: CERTIFICATI MEDICI IN SCADENZA (30 GIORNI) -->
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 relative">
+                    <!-- Icona Email Auto -->
+                    <div class="absolute top-4 right-4 text-[10px] bg-medical-50 text-medical-700 px-2 py-1 rounded-full border border-medical-200 flex items-center gap-1" title="Le email partono all'apertura del gestionale">
+                        <i class="fa-solid fa-paper-plane"></i> Automazione Attiva
+                    </div>
+                    
+                    <div class="flex items-center justify-between mb-4 mt-2">
+                        <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-file-medical text-amber-500"></i> Certificati in Scadenza (30 gg)
                         </h3>
-                        <span id="badge-alert-sub" class="text-xs px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 font-semibold">0</span>
+                        <span id="badge-alert-med-expiring" class="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-semibold">0</span>
                     </div>
-                    <div id="list-alert-sub" class="space-y-3 max-h-72 overflow-y-auto pr-1">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div id="list-alert-med-expiring" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+
+            <!-- BOX 3: LOG EMAIL INVIATE -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-500"></i> Registro Email Automatiche Inviate
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                                <th class="py-3 px-4">Data Invio</th>
+                                <th class="py-3 px-4">Socio</th>
+                                <th class="py-3 px-4">Indirizzo Email</th>
+                                <th class="py-3 px-4 text-center">Stato</th>
+                            </tr>
+                        </thead>
+                        <tbody id="list-log-email" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+                <div id="empty-log-email" class="hidden p-6 text-center text-sm text-slate-400">
+                    Nessuna email automatica inviata finora.
                 </div>
             </div>
         </div>
@@ -274,71 +259,49 @@
         <!-- SOCI / ANAGRAFICA VIEW -->
         <div id="view-soci" class="space-y-6 hidden">
             <!-- Search & Filter Controls -->
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 flex flex-col md:flex-row gap-4 items-center justify-between no-print">
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 flex flex-col md:flex-row gap-3 items-center justify-between no-print">
                 <div class="relative w-full md:w-80">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </span>
-                    <input type="text" id="searchInput" oninput="filterSoci()" placeholder="Cerca per nome, cognome, CF..." 
-                           class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600 focus:bg-white transition">
+                    <input type="text" id="searchInput" oninput="filterSoci()" placeholder="Cerca socio..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600">
                 </div>
                 
-                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                    <select id="filterStatus" onchange="filterSoci()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-medical-600">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+                    <select id="filterStatus" onchange="filterSoci()" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm">
                         <option value="all">Tutti gli stati</option>
                         <option value="sub_active">Abbonamento Attivo</option>
                         <option value="sub_expired">Abbonamento Scaduto</option>
                         <option value="med_expiring">Certificato in Scadenza</option>
                         <option value="med_expired">Certificato Scaduto</option>
-                        <option value="card_expired">Tessera Associativa Scaduta</option>
+                        <option value="card_expired">Tessera Scaduta</option>
                     </select>
 
-                    <select id="sortBy" onchange="filterSoci()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-medical-600">
-                        <option value="cognome_asc">Ordinamento: Cognome (A-Z)</option>
-                        <option value="nome_asc">Ordinamento: Nome (A-Z)</option>
-                        <option value="scadenza_sub">Scadenza Abbonamento</option>
-                        <option value="scadenza_tessera">Scadenza Tessera Associativa</option>
-                        <option value="scadenza_medico">Scadenza Certificato Medico</option>
-                    </select>
-                    
-                    <button onclick="printReport()" class="bg-slate-800 hover:bg-slate-900 text-white px-3.5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-2" title="Stampa Report">
-                        <i class="fa-solid fa-print"></i>
-                        <span class="hidden sm:inline">Stampa</span>
+                    <button onclick="printReport()" class="bg-slate-800 hover:bg-slate-900 text-white px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-print"></i> <span>Stampa</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Print Header Title (Visible only when printing) -->
-            <div class="hidden print:block mb-4 text-center">
-                <h2 class="text-2xl font-bold">Chinesi Center - Report Elenco Soci & Scadenze</h2>
-                <p class="text-xs text-slate-600">Generato il <span id="printDate"></span> &bull; Verolanuova</p>
-            </div>
-
-            <!-- Soci Table Card -->
+            <!-- Soci Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                                <th class="py-4 px-6">Socio & Contatti</th>
-                                <th class="py-4 px-4 text-center">Tessera Associativa</th>
-                                <th class="py-4 px-4 text-center">Certificato Medico</th>
-                                <th class="py-4 px-4 text-center">Abbonamento</th>
-                                <th class="py-4 px-6 text-right no-print">Azioni Rapide</th>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                                <th class="py-4 px-4 sm:px-6">Socio & Contatti</th>
+                                <th class="py-4 px-3 sm:px-4 text-center">Tessera Associativa</th>
+                                <th class="py-4 px-3 sm:px-4 text-center">Certificato Medico</th>
+                                <th class="py-4 px-3 sm:px-4 text-center">Abbonamento</th>
+                                <th class="py-4 px-4 sm:px-6 text-right no-print">Azioni Rapide</th>
                             </tr>
                         </thead>
-                        <tbody id="sociTableBody" class="divide-y divide-slate-100 text-sm">
-                            <!-- Populated dynamically -->
-                        </tbody>
+                        <tbody id="sociTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
                 <!-- Empty State -->
                 <div id="emptyState" class="hidden p-12 text-center">
-                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400 text-2xl mb-3">
-                        <i class="fa-solid fa-user-slash"></i>
-                    </div>
                     <h4 class="text-slate-700 font-semibold text-base">Nessun socio trovato</h4>
-                    <p class="text-slate-400 text-sm mt-1">Prova a modificare i filtri di ricerca o aggiungi un nuovo socio.</p>
                 </div>
             </div>
         </div>
@@ -347,8 +310,8 @@
     <!-- MODAL: ADD / EDIT SOCIO -->
     <div id="socioModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
-            <div class="px-6 py-5 bg-slate-900 text-white flex items-center justify-between shrink-0">
-                <h3 id="modalTitle" class="text-lg font-bold flex items-center gap-2">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                <h3 id="modalTitle" class="text-base sm:text-lg font-bold flex items-center gap-2">
                     <i class="fa-solid fa-user-plus text-tealmed-500"></i> Aggiungi Nuovo Socio
                 </h3>
                 <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 transition">
@@ -356,129 +319,38 @@
                 </button>
             </div>
             
-            <form id="socioForm" onsubmit="saveSocio(event)" class="p-6 overflow-y-auto space-y-4 flex-1">
+            <form id="socioForm" onsubmit="saveSocio(event)" class="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
                 <input type="hidden" id="socioId">
+                <!-- Salva la DATA in cui è stata inviata l'email -->
+                <input type="hidden" id="dataInvioAvvisoCertificato" value=""> 
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nome *</label>
-                        <input type="text" id="nome" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Cognome *</label>
-                        <input type="text" id="cognome" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600">
-                    </div>
+                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nome *</label><input type="text" id="nome" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
+                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Cognome *</label><input type="text" id="cognome" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Data di Nascita</label>
-                        <input type="date" id="dataNascita" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Codice Fiscale</label>
-                        <input type="text" id="codiceFiscale" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600 uppercase">
-                    </div>
+                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Data di Nascita</label><input type="date" id="dataNascita" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
+                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Codice Fiscale</label><input type="text" id="codiceFiscale" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm uppercase"></div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Telefono</label>
-                        <input type="text" id="telefono" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Email</label>
-                        <input type="email" id="email" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600">
-                    </div>
+                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Telefono</label><input type="text" id="telefono" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
+                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1 text-medical-600"><i class="fa-solid fa-envelope"></i> Email (Per Avvisi)</label><input type="email" id="email" class="w-full px-3 py-2 bg-slate-50 border border-medical-300 rounded-xl text-sm"></div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Indirizzo</label>
-                    <input type="text" id="indirizzo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600" placeholder="Via, Città (Verolanuova, ecc.)">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Tessera Associativa *</label>
-                    <input type="date" id="scadenzaTessera" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600">
-                </div>
+                <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Tessera Associativa *</label><input type="date" id="scadenzaTessera" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Certificato Medico *</label>
-                        <input type="date" id="scadenzaCertificato" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Abbonamento *</label>
-                        <input type="date" id="scadenzaAbbonamento" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-medical-600">
-                    </div>
+                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1 text-amber-600"><i class="fa-solid fa-file-medical"></i> Scad. Certificato *</label><input type="date" id="scadenzaCertificato" required class="w-full px-3 py-2 bg-slate-50 border border-amber-300 rounded-xl text-sm"></div>
+                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Abbonamento *</label><input type="date" id="scadenzaAbbonamento" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
                 </div>
 
                 <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition">
-                        Annulla
-                    </button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-medical-600 hover:bg-medical-700 text-white text-sm font-medium transition shadow-sm">
-                        Salva Socio
-                    </button>
+                    <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Annulla</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-medical-600 hover:bg-medical-700 text-white text-sm font-medium transition shadow-sm">Salva Socio</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- MODAL: RAPID RENEW (Rinnovo Veloce) -->
-    <div id="renewModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100">
-            <div class="px-6 py-5 bg-slate-900 text-white flex items-center justify-between">
-                <h3 class="text-lg font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-rotate text-tealmed-500"></i> Rinnovo Rapido Abbonamento
-                </h3>
-                <button onclick="closeRenewModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <div class="p-6 space-y-4">
-                <input type="hidden" id="renewSocioId">
-                <p id="renewSocioName" class="font-semibold text-slate-800 text-base"></p>
-                <p class="text-xs text-slate-500">Seleziona la durata del rinnovo da aggiungere alla data di scadenza attuale o a partire da oggi se già scaduto:</p>
-                
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button type="button" onclick="applyRenew(1)" class="p-3 bg-slate-50 hover:bg-tealmed-50 border border-slate-200 hover:border-tealmed-500 rounded-2xl text-center transition group">
-                        <span class="block text-base font-bold text-slate-800 group-hover:text-tealmed-700">+1 Mese</span>
-                        <span class="text-xs text-slate-400">Rinnovo mensile</span>
-                    </button>
-                    <button type="button" onclick="applyRenew(3)" class="p-3 bg-slate-50 hover:bg-tealmed-50 border border-slate-200 hover:border-tealmed-500 rounded-2xl text-center transition group">
-                        <span class="block text-base font-bold text-slate-800 group-hover:text-tealmed-700">+3 Mesi</span>
-                        <span class="text-xs text-slate-400">Trimestrale</span>
-                    </button>
-                    <button type="button" onclick="applyRenew(6)" class="p-3 bg-slate-50 hover:bg-tealmed-50 border border-slate-200 hover:border-tealmed-500 rounded-2xl text-center transition group">
-                        <span class="block text-base font-bold text-slate-800 group-hover:text-tealmed-700">+6 Mesi</span>
-                        <span class="text-xs text-slate-400">Semestrale</span>
-                    </button>
-                    <button type="button" onclick="applyRenew(12)" class="p-3 bg-slate-50 hover:bg-tealmed-50 border border-slate-200 hover:border-tealmed-500 rounded-2xl text-center transition group">
-                        <span class="block text-base font-bold text-slate-800 group-hover:text-tealmed-700">+1 Anno</span>
-                        <span class="text-xs text-slate-400">Annuale</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: DELETE CONFIRMATION -->
-    <div id="deleteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-100 text-center p-6 space-y-4">
-            <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900">Elimina Socio</h3>
-            <p class="text-sm text-slate-600">Sei sicuro di voler eliminare <span id="deleteSocioName" class="font-semibold text-slate-800"></span> dal sistema?</p>
-            <div class="grid grid-cols-2 gap-3 pt-2">
-                <button type="button" onclick="closeDeleteModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition">
-                    Annulla
-                </button>
-                <button type="button" onclick="confirmDeleteSocio()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium transition shadow-sm">
-                    Elimina
-                </button>
-            </div>
         </div>
     </div>
 
@@ -490,222 +362,123 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 shrink-0">
-        Chinesi Center Verolanuova &bull; Gestionale Palestra & Chinesiologia &bull; Tutti i diritti riservati
-    </footer>
-
     <!-- Firebase Compat Initialization & Application Logic -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyA8BusibZIiARnix4MSBJkEeBxauNbWLMM",
             authDomain: "chinesi-center-gestionale.firebaseapp.com",
-            projectId: "chinesi-center-gestionale",
-            storageBucket: "chinesi-center-gestionale.firebasestorage.app",
-            messagingSenderId: "710102990379",
-            appId: "1:710102990379:web:b005d2b191b22cfaee746e"
+            projectId: "chinesi-center-gestionale"
         };
 
+        // --- CONFIGURAZIONE EMAILJS ---
+        // L'ID del servizio è stato inserito, ma per funzionare devi inserire la Public Key e il Template ID creati su EmailJS.
+        const EMAILJS_SERVICE_ID = "service_t1rovq9";
+        const EMAILJS_PUBLIC_KEY = "INSERISCI_QUI_LA_TUA_PUBLIC_KEY"; 
+        const EMAILJS_TEMPLATE_ID = "INSERISCI_QUI_IL_TEMPLATE_ID";
+        
         let db = null;
         let auth = null;
         let isFirebaseConnected = false;
-
         window.soci = [];
-        window.socioToDeleteId = null;
 
-        // Gestione stato di rete (Online / Offline)
-        window.addEventListener('online', updateNetworkStatus);
-        window.addEventListener('offline', updateNetworkStatus);
-
-        function updateNetworkStatus() {
-            const syncStatusEl = document.getElementById('syncStatus');
-            if (navigator.onLine) {
-                if (auth && auth.currentUser) {
-                    syncStatusEl.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i> Cloud Attivo (${auth.currentUser.email})`;
-                    syncStatusEl.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 text-[10px] border border-emerald-800";
-                    showToast("Connessione internet ripristinata. Sincronizzazione in corso...");
-                }
-            } else {
-                if (auth && auth.currentUser) {
-                    syncStatusEl.innerHTML = `<i class="fa-solid fa-wifi-slash text-amber-400"></i> Offline (Salvataggi in attesa)`;
-                    syncStatusEl.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 text-[10px] border border-amber-800";
-                    showToast("Sei offline! Le modifiche verranno salvate sul dispositivo e inviate appena tornerà internet.");
-                }
-            }
-        }
-
-        // Initialize Firebase Compat & Auth
         function initFirebase() {
-            const syncStatusEl = document.getElementById('syncStatus');
-            try {
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
+            if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+            db = firebase.firestore();
+            auth = firebase.auth();
+
+            // Inizializza EmailJS
+            if(EMAILJS_PUBLIC_KEY !== "INSERISCI_QUI_LA_TUA_PUBLIC_KEY"){
+                emailjs.init(EMAILJS_PUBLIC_KEY);
+            }
+
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    document.getElementById('authScreen').classList.add('hidden');
+                    isFirebaseConnected = true;
+                    setupFirestoreListener();
+                } else {
+                    document.getElementById('authScreen').classList.remove('hidden');
                 }
-                db = firebase.firestore();
-
-                // ⚡ ABILITA LA PERSISTENZA OFFLINE
-                db.enablePersistence().catch(function(err) {
-                    console.warn("Persistenza offline Firebase non supportata completamente su questo browser:", err);
-                });
-
-                auth = firebase.auth();
-
-                // Listen to Auth State Changes
-                auth.onAuthStateChanged((user) => {
-                    if (user) {
-                        document.getElementById('authScreen').classList.add('hidden');
-                        isFirebaseConnected = true;
-                        updateNetworkStatus();
-                        setupFirestoreListener();
-                    } else {
-                        document.getElementById('authScreen').classList.remove('hidden');
-                        isFirebaseConnected = false;
-                        syncStatusEl.innerHTML = `<i class="fa-solid fa-lock text-amber-400"></i> Autenticazione Richiesta`;
-                        syncStatusEl.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 text-[10px] border border-amber-800";
-                    }
-                });
-
-            } catch (err) {
-                console.warn("Firebase initialization error:", err);
-                fallbackToLocalStorage();
-            }
+            });
         }
-
-        let authMode = 'login';
-        
-        window.setAuthMode = function(mode) {
-            authMode = mode;
-            const tabLogin = document.getElementById('tabLogin');
-            const tabRegister = document.getElementById('tabRegister');
-            const submitBtn = document.getElementById('authSubmitBtn');
-
-            if (mode === 'login') {
-                tabLogin.className = "flex-1 py-2 rounded-lg bg-white text-slate-900 shadow-sm transition font-bold text-xs uppercase tracking-wider";
-                tabRegister.className = "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-700 transition font-bold text-xs uppercase tracking-wider";
-                submitBtn.innerText = "Accedi al Gestionale";
-            } else {
-                tabRegister.className = "flex-1 py-2 rounded-lg bg-white text-slate-900 shadow-sm transition font-bold text-xs uppercase tracking-wider";
-                tabLogin.className = "flex-1 py-2 rounded-lg text-slate-500 hover:text-slate-700 transition font-bold text-xs uppercase tracking-wider";
-                submitBtn.innerText = "Crea nuovo account";
-            }
-        };
 
         async function handleAuth(event) {
             event.preventDefault();
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value;
             const errorDiv = document.getElementById('authError');
-            errorDiv.classList.add('hidden');
-
             try {
-                if (authMode === 'login') {
-                    await auth.signInWithEmailAndPassword(email, password);
-                } else {
-                    await auth.createUserWithEmailAndPassword(email, password);
-                }
+                await auth.signInWithEmailAndPassword(email, password);
             } catch (err) {
-                let msg = "Errore di autenticazione.";
-                if (err.code === 'auth/email-already-in-use') msg = "Questa email è già registrata. Usa la sezione Accedi.";
-                else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') msg = "Credenziali errate o account inesistente.";
-                else if (err.code === 'auth/weak-password') msg = "La password deve avere almeno 6 caratteri.";
-                
-                errorDiv.innerText = msg;
+                errorDiv.innerText = "Credenziali errate.";
                 errorDiv.classList.remove('hidden');
             }
         }
 
-        async function logoutUser() {
-            if (auth) {
-                await auth.signOut();
-            }
-        }
+        async function logoutUser() { if (auth) { await auth.signOut(); } }
 
         function setupFirestoreListener() {
-            try {
-                db.collection('soci').onSnapshot((snapshot) => {
-                    const loaded = [];
-                    snapshot.forEach(docSnap => {
-                        loaded.push({ id: docSnap.id, ...docSnap.data() });
-                    });
+            db.collection('soci').onSnapshot((snapshot) => {
+                const loaded = [];
+                snapshot.forEach(docSnap => { loaded.push({ id: docSnap.id, ...docSnap.data() }); });
+                window.soci = loaded;
+                
+                renderDashboard();
+                renderSociTable();
+                
+                // Dopo aver caricato i dati, esegue il check automatico per l'invio delle email
+                checkScadenzeAndSendEmails();
 
-                    window.soci = loaded;
-                    renderDashboard();
-                    renderSociTable();
-                }, (error) => {
-                    console.error("Firestore snapshot error:", error);
-                    showToast("Errore Database: Regole di sicurezza errate o connessione bloccata.");
-                    fallbackToLocalStorage();
-                });
-            } catch (e) {
-                console.error("Setup listener error:", e);
-                fallbackToLocalStorage();
-            }
+            }, (error) => { console.error("Firestore error:", error); });
         }
 
-        function fallbackToLocalStorage() {
-            isFirebaseConnected = false;
-            const syncStatusEl = document.getElementById('syncStatus');
-            syncStatusEl.innerHTML = `<i class="fa-solid fa-hard-drive text-amber-400"></i> Modalità Locale`;
-            syncStatusEl.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 text-[10px] border border-amber-800";
+        // --- FUNZIONE CENTRALE PER INVIO EMAIL AUTOMATICO ---
+        function checkScadenzeAndSendEmails() {
+            if(EMAILJS_PUBLIC_KEY === "INSERISCI_QUI_LA_TUA_PUBLIC_KEY") return; // Sicurezza se non configurato
 
-            const stored = localStorage.getItem('chinesi_center_soci');
-            if (stored) {
-                try {
-                    window.soci = JSON.parse(stored);
-                } catch(e) {
-                    window.soci = [];
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            window.soci.forEach(socio => {
+                // Se la mail non c'è, o se l'abbiamo GIA' inviata (c'è una data salvata), saltiamo il socio.
+                if (!socio.email || socio.dataInvioAvvisoCertificato) return;
+
+                const medStat = getDateStatus(socio.scadenzaCertificato);
+
+                // Controlla se la scadenza è ENTRO i 30 giorni (e non è ancora scaduto)
+                if (medStat.status === 'expiring' && medStat.days <= 30 && medStat.days >= 0) {
+                    
+                    // Prepara i dati per EmailJS (assicurati che il tuo template abbia queste variabili)
+                    const templateParams = {
+                        to_email: socio.email,
+                        to_name: socio.nome + ' ' + socio.cognome,
+                        data_scadenza: formatDateIT(socio.scadenzaCertificato)
+                    };
+
+                    // Invia la Mail
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                        .then(function(response) {
+                            console.log('Email inviata con successo a:', socio.email);
+                            
+                            // Aggiorna Firestore: salva la data odierna come data di invio dell'avviso
+                            db.collection('soci').doc(socio.id).update({
+                                dataInvioAvvisoCertificato: todayStr
+                            });
+
+                        }, function(error) {
+                            console.error('Errore invio EmailJS per', socio.email, error);
+                        });
                 }
-            } else {
-                window.soci = [];
-                saveToLocalStorage();
-            }
-            renderDashboard();
-            renderSociTable();
-        }
-
-        function saveToLocalStorage() {
-            localStorage.setItem('chinesi_center_soci', JSON.stringify(window.soci));
+            });
         }
 
         window.persistSocio = function(socioData) {
-            if (isFirebaseConnected && db) {
-                // Esecuzione immediata senza "await", Firebase gestisce la cache offline automaticamente!
-                db.collection('soci').doc(socioData.id).set(socioData).catch(e => {
-                    console.error("Error saving to Firestore:", e);
-                });
-            } else {
-                const index = window.soci.findIndex(s => s.id === socioData.id);
-                if (index !== -1) {
-                    window.soci[index] = socioData;
-                } else {
-                    window.soci.unshift(socioData);
-                }
-                saveToLocalStorage();
-                renderDashboard();
-                renderSociTable();
-            }
-        };
-
-        window.removeSocioFromDb = function(id) {
-            if (isFirebaseConnected && db) {
-                // Eliminazione asincrona
-                db.collection('soci').doc(id).delete().catch(e => {
-                    console.error("Error deleting from Firestore:", e);
-                });
-            } else {
-                window.soci = window.soci.filter(s => s.id !== id);
-                saveToLocalStorage();
-                renderDashboard();
-                renderSociTable();
-            }
+            if (isFirebaseConnected && db) { db.collection('soci').doc(socioData.id).set(socioData); } 
         };
 
         window.formatDateIT = function(dateStr) {
             if (!dateStr) return 'N/D';
             const parts = dateStr.split('-');
-            if (parts.length === 3) {
-                return `${parts[2]}-${parts[1]}-${parts[0]}`;
-            }
+            if (parts.length === 3) { return `${parts[2]}-${parts[1]}-${parts[0]}`; }
             return dateStr;
         };
 
@@ -716,113 +489,134 @@
             const tabSoci = document.getElementById('tab-soci');
 
             if (tabName === 'dashboard') {
-                dashView.classList.remove('hidden');
-                sociView.classList.add('hidden');
-                tabDash.className = "py-4 px-1 border-b-2 font-medium text-sm border-medical-600 text-medical-700 flex items-center gap-2";
-                tabSoci.className = "py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 flex items-center gap-2";
+                dashView.classList.remove('hidden'); sociView.classList.add('hidden');
+                tabDash.classList.add('border-medical-600', 'text-medical-700'); tabDash.classList.remove('border-transparent', 'text-slate-500');
+                tabSoci.classList.remove('border-medical-600', 'text-medical-700'); tabSoci.classList.add('border-transparent', 'text-slate-500');
                 renderDashboard();
             } else {
-                dashView.classList.add('hidden');
-                sociView.classList.remove('hidden');
-                tabSoci.className = "py-4 px-1 border-b-2 font-medium text-sm border-medical-600 text-medical-700 flex items-center gap-2";
-                tabDash.className = "py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 flex items-center gap-2";
+                dashView.classList.add('hidden'); sociView.classList.remove('hidden');
+                tabSoci.classList.add('border-medical-600', 'text-medical-700'); tabSoci.classList.remove('border-transparent', 'text-slate-500');
+                tabDash.classList.remove('border-medical-600', 'text-medical-700'); tabDash.classList.add('border-transparent', 'text-slate-500');
                 renderSociTable();
             }
         };
 
         window.getDateStatus = function(dateString) {
-            if (!dateString) return { status: 'expired', label: 'Non impostata', color: 'red' };
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const target = new Date(dateString);
-            target.setHours(0,0,0,0);
+            if (!dateString) return { status: 'expired', label: 'Non impostata', color: 'red', days: 0 };
+            const today = new Date(); today.setHours(0,0,0,0);
+            const target = new Date(dateString); target.setHours(0,0,0,0);
             
             const diffTime = target - today;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if (diffDays < 0) {
-                return { status: 'expired', label: 'Scaduto (' + Math.abs(diffDays) + 'g fa)', color: 'rose', days: diffDays };
-            } else if (diffDays <= 30) {
-                return { status: 'expiring', label: 'Scade tra ' + diffDays + 'g', color: 'amber', days: diffDays };
-            } else {
-                return { status: 'active', label: 'Regolare (' + diffDays + 'g)', color: 'emerald', days: diffDays };
-            }
+            if (diffDays < 0) { return { status: 'expired', label: 'Scaduto (' + Math.abs(diffDays) + 'g fa)', color: 'rose', days: diffDays }; } 
+            else if (diffDays <= 30) { return { status: 'expiring', label: 'Scade tra ' + diffDays + 'g', color: 'amber', days: diffDays }; } 
+            else { return { status: 'active', label: 'Regolare (' + diffDays + 'g)', color: 'emerald', days: diffDays }; }
         };
 
         window.renderDashboard = function() {
-            const total = window.soci.length;
+            const alertMedExpired = document.getElementById('list-alert-med-expired');
+            const alertMedExpiring = document.getElementById('list-alert-med-expiring');
+            const logEmailContainer = document.getElementById('list-log-email');
+            const emptyLogState = document.getElementById('empty-log-email');
+            
+            alertMedExpired.innerHTML = ''; 
+            alertMedExpiring.innerHTML = '';
+            logEmailContainer.innerHTML = '';
+
+            let medExpiredList = []; 
+            let medExpiringList = [];
+            let emailSentList = []; // Array per il log
+            
+            // Variabili per i contatori delle card
             let activeSubCount = 0;
-            let expiringMedCount = 0;
             let expiredTotalCount = 0;
 
-            const alertMedContainer = document.getElementById('list-alert-med');
-            const alertSubContainer = document.getElementById('list-alert-sub');
-            alertMedContainer.innerHTML = '';
-            alertSubContainer.innerHTML = '';
-
-            let medAlertsList = [];
-            let subAlertsList = [];
-
             window.soci.forEach(s => {
-                const subStat = getDateStatus(s.scadenzaAbbonamento);
                 const medStat = getDateStatus(s.scadenzaCertificato);
+                const subStat = getDateStatus(s.scadenzaAbbonamento);
                 const cardStat = getDateStatus(s.scadenzaTessera);
-
+                
+                // Popolamento Contatori Card Superiori
                 if (subStat.status === 'active') activeSubCount++;
                 if (subStat.status === 'expired' || cardStat.status === 'expired') expiredTotalCount++;
-                if (medStat.status === 'expiring' || medStat.status === 'expired') {
-                    expiringMedCount++;
-                    medAlertsList.push({ socio: s, stat: medStat });
-                }
-                if (subStat.status === 'expiring' || subStat.status === 'expired' || cardStat.status === 'expiring' || cardStat.status === 'expired') {
-                    subAlertsList.push({ socio: s, subStat, cardStat });
+
+                // Popolamento Box Certificati
+                if (medStat.status === 'expired') { medExpiredList.push({ socio: s, stat: medStat }); } 
+                else if (medStat.status === 'expiring') { medExpiringList.push({ socio: s, stat: medStat }); }
+
+                // Raccoglie chi ha ricevuto la mail per il log
+                if (s.dataInvioAvvisoCertificato) {
+                    emailSentList.push(s);
                 }
             });
 
-            document.getElementById('stat-total').innerText = total;
+            // Aggiorna le 4 Card delle Statistiche
+            document.getElementById('stat-total').innerText = window.soci.length;
             document.getElementById('stat-active-sub').innerText = activeSubCount;
-            document.getElementById('stat-expiring-med').innerText = expiringMedCount;
+            document.getElementById('stat-expiring-med').innerText = medExpiringList.length;
             document.getElementById('stat-expired-total').innerText = expiredTotalCount;
 
-            document.getElementById('badge-alert-med').innerText = medAlertsList.length;
-            document.getElementById('badge-alert-sub').innerText = subAlertsList.length;
+            // Aggiorna Badge Liste Notifiche
+            document.getElementById('badge-alert-med-expired').innerText = medExpiredList.length;
+            document.getElementById('badge-alert-med-expiring').innerText = medExpiringList.length;
 
-            if (medAlertsList.length === 0) {
-                alertMedContainer.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato in scadenza o scaduto.</p>`;
+            // Render Scaduti
+            if (medExpiredList.length === 0) {
+                alertMedExpired.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato scaduto.</p>`;
             } else {
-                medAlertsList.forEach(item => {
-                    const badgeClass = item.stat.status === 'expired' ? 'bg-rose-100 text-rose-700 border-rose-200' : 'bg-amber-100 text-amber-700 border-amber-200';
-                    alertMedContainer.innerHTML += `
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-sm">
-                            <div>
-                                <p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome}</p>
-                                <p class="text-xs text-slate-500">Tel: ${item.socio.telefono || 'N/D'} &bull; Scad.: ${formatDateIT(item.socio.scadenzaCertificato)}</p>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs px-2.5 py-1 rounded-full border font-medium ${badgeClass}">${item.stat.label}</span>
-                                <button onclick="openEditModal('${item.socio.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition"><i class="fa-solid fa-pen text-xs"></i></button>
-                            </div>
-                        </div>
-                    `;
+                medExpiredList.forEach(item => {
+                    alertMedExpired.innerHTML += `
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
+                            <div><p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome}</p><p class="text-[11px] sm:text-xs text-slate-500">Scaduto il: ${formatDateIT(item.socio.scadenzaCertificato)}</p></div>
+                            <div class="flex items-center gap-1.5"><span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-rose-100 text-rose-700">${item.stat.label}</span>
+                            <button onclick="openEditModal('${item.socio.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button></div>
+                        </div>`;
                 });
             }
 
-            if (subAlertsList.length === 0) {
-                alertSubContainer.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun abbonamento o tessera in scadenza o scaduta.</p>`;
+            // Render In Scadenza (30 gg)
+            if (medExpiringList.length === 0) {
+                alertMedExpiring.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato in scadenza nei prossimi 30 giorni.</p>`;
             } else {
-                subAlertsList.forEach(item => {
-                    alertSubContainer.innerHTML += `
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-sm">
-                            <div>
-                                <p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome}</p>
-                                <p class="text-xs text-slate-500">Scadenza Abb.: ${formatDateIT(item.socio.scadenzaAbbonamento)}</p>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <button onclick="openRenewModal('${item.socio.id}')" class="px-2.5 py-1 rounded-lg bg-tealmed-600 hover:bg-tealmed-700 text-white text-xs font-medium transition shadow-sm">Rinnova</button>
-                                <button onclick="openEditModal('${item.socio.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition"><i class="fa-solid fa-pen text-xs"></i></button>
-                            </div>
-                        </div>
-                    `;
+                medExpiringList.forEach(item => {
+                    // Se la mail è stata inviata, mostriamo una piccola icona verde di fianco al nome
+                    const mailInviataIcon = item.socio.dataInvioAvvisoCertificato 
+                        ? `<i class="fa-solid fa-envelope-circle-check text-emerald-500 ml-1" title="Email inviata"></i>` 
+                        : ``;
+
+                    alertMedExpiring.innerHTML += `
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
+                            <div><p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome} ${mailInviataIcon}</p><p class="text-[11px] sm:text-xs text-slate-500">Scadenza: ${formatDateIT(item.socio.scadenzaCertificato)}</p></div>
+                            <div class="flex items-center gap-1.5"><span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">${item.stat.label}</span>
+                            <button onclick="openEditModal('${item.socio.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button></div>
+                        </div>`;
+                });
+            }
+
+            // Render LOG Email Inviate
+            if (emailSentList.length === 0) {
+                logEmailContainer.parentElement.classList.add('hidden');
+                emptyLogState.classList.remove('hidden');
+            } else {
+                logEmailContainer.parentElement.classList.remove('hidden');
+                emptyLogState.classList.add('hidden');
+                
+                // Ordina le mail inviate dalla più recente alla più vecchia
+                emailSentList.sort((a, b) => new Date(b.dataInvioAvvisoCertificato) - new Date(a.dataInvioAvvisoCertificato));
+
+                emailSentList.forEach(socio => {
+                    logEmailContainer.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-xs sm:text-sm">
+                            <td class="py-3 px-4 font-medium text-slate-700">${formatDateIT(socio.dataInvioAvvisoCertificato)}</td>
+                            <td class="py-3 px-4 font-semibold text-slate-900">${socio.cognome} ${socio.nome}</td>
+                            <td class="py-3 px-4 text-slate-600">${socio.email}</td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">
+                                    <i class="fa-solid fa-check"></i> Inviata
+                                </span>
+                            </td>
+                        </tr>`;
                 });
             }
         };
@@ -830,56 +624,14 @@
         window.renderSociTable = function() {
             const searchVal = document.getElementById('searchInput').value.toLowerCase();
             const filterStatus = document.getElementById('filterStatus').value;
-            const sortBy = document.getElementById('sortBy') ? document.getElementById('sortBy').value : 'cognome_asc';
             const tbody = document.getElementById('sociTableBody');
-            const emptyState = document.getElementById('emptyState');
-
             tbody.innerHTML = '';
-
+            
             const filtered = window.soci.filter(s => {
                 const fullName = `${s.nome} ${s.cognome}`.toLowerCase();
-                const cf = (s.codiceFiscale || '').toLowerCase();
-                const matchesSearch = fullName.includes(searchVal) || cf.includes(searchVal);
-                
-                const subStat = getDateStatus(s.scadenzaAbbonamento);
-                const medStat = getDateStatus(s.scadenzaCertificato);
-                const cardStat = getDateStatus(s.scadenzaTessera);
-
-                let matchesStatus = true;
-                if (filterStatus === 'sub_active') matchesStatus = (subStat.status === 'active');
-                if (filterStatus === 'sub_expired') matchesStatus = (subStat.status === 'expired');
-                if (filterStatus === 'med_expiring') matchesStatus = (medStat.status === 'expiring');
-                if (filterStatus === 'med_expired') matchesStatus = (medStat.status === 'expired');
-                if (filterStatus === 'card_expired') matchesStatus = (cardStat.status === 'expired');
-
-                return matchesSearch && matchesStatus;
+                const matchesSearch = fullName.includes(searchVal);
+                return matchesSearch; 
             });
-
-            filtered.sort((a, b) => {
-                if (sortBy === 'cognome_asc') {
-                    const comp = (a.cognome || '').localeCompare(b.cognome || '');
-                    if (comp !== 0) return comp;
-                    return (a.nome || '').localeCompare(b.nome || '');
-                } else if (sortBy === 'nome_asc') {
-                    const comp = (a.nome || '').localeCompare(b.nome || '');
-                    if (comp !== 0) return comp;
-                    return (a.cognome || '').localeCompare(b.cognome || '');
-                } else if (sortBy === 'scadenza_sub') {
-                    return new Date(a.scadenzaAbbonamento || '1970-01-01') - new Date(b.scadenzaAbbonamento || '1970-01-01');
-                } else if (sortBy === 'scadenza_tessera') {
-                    return new Date(a.scadenzaTessera || '1970-01-01') - new Date(b.scadenzaTessera || '1970-01-01');
-                } else if (sortBy === 'scadenza_medico') {
-                    return new Date(a.scadenzaCertificato || '1970-01-01') - new Date(b.scadenzaCertificato || '1970-01-01');
-                }
-                return 0;
-            });
-
-            if (filtered.length === 0) {
-                emptyState.classList.remove('hidden');
-                return;
-            } else {
-                emptyState.classList.add('hidden');
-            }
 
             filtered.forEach(s => {
                 const cardStat = getDateStatus(s.scadenzaTessera);
@@ -887,73 +639,30 @@
                 const subStat = getDateStatus(s.scadenzaAbbonamento);
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/80 transition border-b border-slate-100">
-                        <td class="py-4 px-6">
-                            <div class="font-bold text-slate-900">${s.cognome} ${s.nome}</div>
-                            <div class="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-                                <span><i class="fa-solid fa-phone text-slate-400"></i> ${s.telefono || 'N/D'}</span>
-                            </div>
-                        </td>
-                        <td class="py-4 px-4 text-center">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700 border border-${cardStat.color}-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-${cardStat.color}-500"></span>
-                                ${cardStat.label}
-                            </span>
-                            <div class="text-xs font-medium text-slate-700 mt-1">${formatDateIT(s.scadenzaTessera)}</div>
-                        </td>
-                        <td class="py-4 px-4 text-center">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-${medStat.color}-50 text-${medStat.color}-700 border border-${medStat.color}-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-${medStat.color}-500"></span>
-                                ${medStat.label}
-                            </span>
-                            <div class="text-xs font-medium text-slate-700 mt-1">${formatDateIT(s.scadenzaCertificato)}</div>
-                        </td>
-                        <td class="py-4 px-4 text-center">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-${subStat.color}-50 text-${subStat.color}-700 border border-${subStat.color}-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-${subStat.color}-500"></span>
-                                ${subStat.label}
-                            </span>
-                            <div class="text-xs font-medium text-slate-700 mt-1">${formatDateIT(s.scadenzaAbbonamento)}</div>
-                        </td>
-                        <td class="py-4 px-6 text-right space-x-1">
-                            <button onclick="openRenewModal('${s.id}')" title="Rinnovo Rapido" class="p-2 rounded-xl bg-tealmed-50 text-tealmed-700 hover:bg-tealmed-100 transition">
-                                <i class="fa-solid fa-rotate text-xs"></i>
-                            </button>
-                            <button onclick="openEditModal('${s.id}')" title="Modifica" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
-                                <i class="fa-solid fa-pen text-xs"></i>
-                            </button>
-                            <button onclick="deleteSocio('${s.id}')" title="Elimina" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition">
-                                <i class="fa-solid fa-trash text-xs"></i>
-                            </button>
-                        </td>
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="py-3 px-4 sm:px-6"><div class="font-bold text-slate-900 text-sm whitespace-nowrap">${s.cognome} ${s.nome}</div></td>
+                        <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700">${cardStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaTessera)}</div></td>
+                        <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${medStat.color}-50 text-${medStat.color}-700">${medStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaCertificato)}</div></td>
+                        <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${subStat.color}-50 text-${subStat.color}-700">${subStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaAbbonamento)}</div></td>
+                        <td class="py-3 px-4 text-right whitespace-nowrap"><button onclick="openEditModal('${s.id}')" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition"><i class="fa-solid fa-pen text-xs"></i></button></td>
                     </tr>
                 `;
             });
         };
 
-        window.filterSoci = function() {
-            renderSociTable();
-        };
+        window.filterSoci = function() { renderSociTable(); };
 
         window.openModal = function() {
             document.getElementById('socioId').value = '';
             document.getElementById('socioForm').reset();
+            document.getElementById('dataInvioAvvisoCertificato').value = ''; // Reset date per nuovi soci
             document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-user-plus text-tealmed-500"></i> Aggiungi Nuovo Socio`;
-            
-            const todayStr = new Date().toISOString().split('T')[0];
-            const nextYearStr = (new Date().getFullYear() + 1) + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0');
-            
-            document.getElementById('scadenzaTessera').value = nextYearStr;
-            document.getElementById('scadenzaCertificato').value = nextYearStr;
-            document.getElementById('scadenzaAbbonamento').value = todayStr;
-
             document.getElementById('socioModal').classList.remove('hidden');
         };
 
         window.openEditModal = function(id) {
             const socio = window.soci.find(s => s.id === id);
             if (!socio) return;
-
             document.getElementById('socioId').value = socio.id;
             document.getElementById('nome').value = socio.nome || '';
             document.getElementById('cognome').value = socio.cognome || '';
@@ -961,179 +670,51 @@
             document.getElementById('codiceFiscale').value = socio.codiceFiscale || '';
             document.getElementById('telefono').value = socio.telefono || '';
             document.getElementById('email').value = socio.email || '';
-            document.getElementById('indirizzo').value = socio.indirizzo || '';
             document.getElementById('scadenzaTessera').value = socio.scadenzaTessera || '';
             document.getElementById('scadenzaCertificato').value = socio.scadenzaCertificato || '';
             document.getElementById('scadenzaAbbonamento').value = socio.scadenzaAbbonamento || '';
+            
+            // Riprendiamo la data di invio della mail, se esiste
+            document.getElementById('dataInvioAvvisoCertificato').value = socio.dataInvioAvvisoCertificato || '';
 
             document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-user-pen text-tealmed-500"></i> Modifica Dati Socio`;
             document.getElementById('socioModal').classList.remove('hidden');
         };
 
-        window.closeModal = function() {
-            document.getElementById('socioModal').classList.add('hidden');
-        };
+        window.closeModal = function() { document.getElementById('socioModal').classList.add('hidden'); };
 
         window.saveSocio = function(event) {
             event.preventDefault();
             const id = document.getElementById('socioId').value;
+            const newScadenzaCertificato = document.getElementById('scadenzaCertificato').value;
+            
+            // Gestione RESET automatico dell'email inviata:
+            // Se aggiorni la data di scadenza del certificato, il sistema resetta il log dell'email, preparandosi al nuovo anno.
+            let avvisoData = document.getElementById('dataInvioAvvisoCertificato').value;
+            if (id) {
+                const oldSocio = window.soci.find(s => s.id === id);
+                if (oldSocio && oldSocio.scadenzaCertificato !== newScadenzaCertificato) {
+                    avvisoData = ""; // Scadenza cambiata, log resettato!
+                }
+            }
+
             const socioData = {
                 id: id || 'socio-' + Date.now(),
                 nome: document.getElementById('nome').value.trim(),
                 cognome: document.getElementById('cognome').value.trim(),
                 dataNascita: document.getElementById('dataNascita').value,
+                codiceFiscale: document.getElementById('codiceFiscale').value.toUpperCase(),
                 telefono: document.getElementById('telefono').value.trim(),
                 email: document.getElementById('email').value.trim(),
-                indirizzo: document.getElementById('indirizzo').value.trim(),
                 scadenzaTessera: document.getElementById('scadenzaTessera').value,
-                scadenzaCertificato: document.getElementById('scadenzaCertificato').value,
-                scadenzaAbbonamento: document.getElementById('scadenzaAbbonamento').value
+                scadenzaCertificato: newScadenzaCertificato,
+                scadenzaAbbonamento: document.getElementById('scadenzaAbbonamento').value,
+                dataInvioAvvisoCertificato: avvisoData // Salva la data (o il reset)
             };
 
             persistSocio(socioData);
             closeModal();
-            
-            if (navigator.onLine) {
-                showToast(id ? "Socio aggiornato con successo!" : "Nuovo socio aggiunto con successo!");
-            } else {
-                showToast("Modifiche salvate offline. Si sincronizzeranno appena sarai online!");
-            }
-        };
-
-        window.deleteSocio = function(id) {
-            window.socioToDeleteId = id;
-            const socio = window.soci.find(s => s.id === id);
-            if (socio) {
-                document.getElementById('deleteSocioName').innerText = `${socio.cognome} ${socio.nome}`;
-                document.getElementById('deleteModal').classList.remove('hidden');
-            }
-        };
-
-        window.closeDeleteModal = function() {
-            document.getElementById('deleteModal').classList.add('hidden');
-            window.socioToDeleteId = null;
-        };
-
-        window.confirmDeleteSocio = function() {
-            if (window.socioToDeleteId) {
-                removeSocioFromDb(window.socioToDeleteId);
-                if (navigator.onLine) {
-                    showToast("Socio eliminato con successo!");
-                } else {
-                    showToast("Eliminazione registrata offline. Si sincronizzerà appena sarai online!");
-                }
-            }
-            closeDeleteModal();
-        };
-
-        window.openRenewModal = function(id) {
-            const socio = window.soci.find(s => s.id === id);
-            if (!socio) return;
-            document.getElementById('renewSocioId').value = socio.id;
-            document.getElementById('renewSocioName').innerText = `${socio.cognome} ${socio.nome}`;
-            document.getElementById('renewModal').classList.remove('hidden');
-        };
-
-        window.closeRenewModal = function() {
-            document.getElementById('renewModal').classList.add('hidden');
-        };
-
-        window.applyRenew = function(months) {
-            const id = document.getElementById('renewSocioId').value;
-            const socio = window.soci.find(s => s.id === id);
-            if (!socio) return;
-
-            let baseDate = new Date();
-            const currentSub = new Date(socio.scadenzaAbbonamento);
-            if (currentSub > baseDate) {
-                baseDate = currentSub;
-            }
-            baseDate.setMonth(baseDate.getMonth() + months);
-            socio.scadenzaAbbonamento = baseDate.toISOString().split('T')[0];
-
-            persistSocio(socio);
-            closeRenewModal();
-            
-            if (navigator.onLine) {
-                showToast(`Abbonamento rinnovato di ${months} ${months === 1 ? 'mese' : 'mesi'}!`);
-            } else {
-                showToast(`Rinnovo salvato offline. Verrà sincronizzato a breve.`);
-            }
-        };
-
-        window.exportCSV = function() {
-            let csvContent = "\uFEFFCognome;Nome;Data Nascita;Codice Fiscale;Telefono;Email;Indirizzo;Scadenza Tessera;Scadenza Certificato;Scadenza Abbonamento\n";
-            
-            window.soci.forEach(s => {
-                const row = [
-                    `"${(s.cognome || '').replace(/"/g, '""')}"`,
-                    `"${(s.nome || '').replace(/"/g, '""')}"`,
-                    `"${formatDateIT(s.dataNascita) || ''}"`,
-                    `"${(s.codiceFiscale || '').toUpperCase()}"`,
-                    `"${s.telefono || ''}"`,
-                    `"${s.email || ''}"`,
-                    `"${(s.indirizzo || '').replace(/"/g, '""')}"`,
-                    `"${formatDateIT(s.scadenzaTessera) || ''}"`,
-                    `"${formatDateIT(s.scadenzaCertificato) || ''}"`,
-                    `"${formatDateIT(s.scadenzaAbbonamento) || ''}"`
-                ];
-                csvContent += row.join(";") + "\n";
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "chinesi_center_soci_" + new Date().toISOString().split('T')[0] + ".csv");
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            showToast("File CSV Excel esportato con successo!");
-        };
-
-        window.printReport = function() {
-            document.getElementById('printDate').innerText = new Date().toLocaleDateString('it-IT');
-            window.print();
-        };
-
-        window.exportData = function() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.soci, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "chinesi_center_backup_" + new Date().toISOString().split('T')[0] + ".json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showToast("Backup JSON esportato con successo!");
-        };
-
-        window.importData = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) {
-                        window.soci = imported;
-                        if (isFirebaseConnected && db) {
-                            for (let s of window.soci) {
-                                await db.collection('soci').doc(s.id).set(s);
-                            }
-                        } else {
-                            saveToLocalStorage();
-                        }
-                        renderDashboard();
-                        renderSociTable();
-                        showToast("Database importato con successo!");
-                    } else {
-                        showToast("File JSON non valido.");
-                    }
-                } catch(err) {
-                    showToast("Errore durante la lettura del file JSON.");
-                }
-            };
-            reader.readAsText(file);
+            showToast("Socio salvato con successo!");
         };
 
         window.showToast = function(message) {
@@ -1141,73 +722,10 @@
             document.getElementById('toastMessage').innerText = message;
             document.getElementById('toastIcon').innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
             toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3500);
+            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3500);
         };
 
-        window.toggleDropdown = function(event) {
-            event.stopPropagation();
-            const menu = document.getElementById('dropdownMenu');
-            menu.classList.toggle('hidden');
-        };
-
-        window.closeDropdown = function() {
-            const menu = document.getElementById('dropdownMenu');
-            if (menu) {
-                menu.classList.add('hidden');
-            }
-        };
-
-        window.addEventListener('click', function(e) {
-            const menu = document.getElementById('dropdownMenu');
-            if (menu && !menu.contains(e.target)) {
-                menu.classList.add('hidden');
-            }
-        });
-
-        // --- SISTEMA DI INSTALLAZIONE APP (PWA) ---
-        function setupPWA() {
-            // Icona Vettoriale (Cuore con battito)
-            const svgIcon = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%230f766e'/%3E%3Cpath d='M356.9 140.6c-31.5-13.4-66.8-5.8-91.8 19.8L256 168.6l-9.1-8.2c-25-25.6-60.3-33.2-91.8-19.8-44.4 18.9-74.1 63.8-74.1 111.4 0 20.7 5.5 41.1 16 58.8l153.3 155c4.3 4.3 11 4.3 15.3 0L419 310.8c10.5-17.7 16-38.1 16-58.8 0-47.6-29.7-92.5-74.1-111.4z' fill='%23ffffff'/%3E%3Cpath d='M256 220c-38.6 0-70 31.4-70 70s31.4 70 70 70 70-31.4 70-70-31.4-70-70-70zm28.1 76.7l-22.9 34.4c-3.5 5.4-11.4 6.1-15.8 1.3l-17.2-18.4-9.8 14.6c-3.2 4.8-10 5.5-14.1 1.4l-9.9-9.9c-3.4-3.4-3.4-9 0-12.4l9.9-9.9c4-4 10.9-3.4 14.1 1.4l9.8 14.6 17.2-18.4c4.4-4.7 12.2-4.1 15.8 1.3l22.9 34.4c2.8 4.1 1 9.6-3.3 11.2l-15.3 5.8-7.4-18.5-17.2 18.4z' fill='%230f766e'/%3E%3C/svg%3E";
-            
-            // Creazione dinamica del file Manifest
-            const manifest = {
-                name: "Chinesi Center Gestionale",
-                short_name: "Chinesi Center",
-                start_url: window.location.href,
-                display: "standalone", // Apre senza barra degli indirizzi
-                background_color: "#f8fafc",
-                theme_color: "#0f766e",
-                icons: [
-                    {
-                        src: svgIcon,
-                        sizes: "512x512",
-                        type: "image/svg+xml",
-                        purpose: "any maskable"
-                    }
-                ]
-            };
-            
-            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-            document.getElementById('pwa-manifest').setAttribute('href', URL.createObjectURL(manifestBlob));
-
-            // Registrazione Service Worker "fittizio" per abilitare l'installazione in Chrome
-            const swCode = `
-                self.addEventListener('install', (e) => self.skipWaiting());
-                self.addEventListener('activate', (e) => self.clients.claim());
-                self.addEventListener('fetch', (e) => {});
-            `;
-            const swBlob = new Blob([swCode], {type: 'application/javascript'});
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
-            }
-        }
-
-        window.onload = function() {
-            initFirebase();
-            setupPWA(); // Avvia il sistema di installazione
-        };
+        window.onload = function() { initFirebase(); };
     </script>
 </body>
 </html>
