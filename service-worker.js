@@ -1,10 +1,10 @@
-const CACHE_NAME = 'Chinesi-v4';
+const CACHE_NAME = 'Chinesi-v5';
 const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icons/192.png',
-  './icons/512.png'
+  '/chinesi/',
+  '/chinesi/index.html',
+  '/chinesi/manifest.json',
+  '/chinesi/icons/192.png',
+  '/chinesi/icons/512.png'
 ];
 
 self.addEventListener('install', (evt) => {
