@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chinesi Center - Gestionale Palestra & Chinesiologia</title>
     
+    	<!-- PWA CONFIG -->
+	<link rel="manifest" href="manifest.json">
+	<meta name="theme-color" content="#ffd700">
+	<link rel="apple-touch-icon" href="icons/192.png">
+
+	<!-- REGISTRAZIONE SERVICE WORKER -->
+	<script>
+	  if ('serviceWorker' in navigator) {
+		window.addEventListener('load', () => {
+		  navigator.serviceWorker.register('sw.js')
+			.then(reg => console.log('Service Worker registrato!', reg))
+			.catch(err => console.log('Errore SW:', err));
+		});
+	  }
+	</script>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -26,9 +42,6 @@
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         
-    <!-- PWA Manifest -->
-    <link rel="manifest" id="pwa-manifest">
-
     <!-- Firebase Compat SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -421,7 +434,7 @@
                 if (user) {
                     document.getElementById('authScreen').classList.add('hidden');
                     isFirebaseConnected = true;
-                    updateNetworkStatus(); // Forza aggiornamento scritta stato connessione
+                    updateNetworkStatus();
                     setupFirestoreListener();
                 } else {
                     document.getElementById('authScreen').classList.remove('hidden');
@@ -452,7 +465,7 @@
                 snapshot.forEach(docSnap => { loaded.push({ id: docSnap.id, ...docSnap.data() }); });
                 window.soci = loaded;
                 
-                updateNetworkStatus(); // Conferma connessione attiva
+                updateNetworkStatus(); 
                 renderDashboard();
                 renderSociTable();
                 
@@ -472,12 +485,10 @@
             const todayStr = new Date().toISOString().split('T')[0];
 
             window.soci.forEach(socio => {
-                // Se non c'è email o l'email è GIÀ stata inviata, saltiamo.
                 if (!socio.email || socio.dataInvioAvvisoCertificato) return;
 
                 const medStat = getDateStatus(socio.scadenzaCertificato);
 
-                // Controlla se la scadenza è ENTRO 30 giorni (e > 0, cioè non scaduto)
                 if (medStat.status === 'expiring' && medStat.days <= 30 && medStat.days >= 0) {
                     
                     const templateParams = {
@@ -489,13 +500,11 @@
                     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
                         .then(function(response) {
                             console.log('Email inviata a:', socio.email);
-                            // Aggiorna Firestore: salva data invio
                             db.collection('soci').doc(socio.id).update({
                                 dataInvioAvvisoCertificato: todayStr
                             });
                         }, function(error) {
                             console.error('Errore invio EmailJS per', socio.email, error);
-                            // Mostra errore a schermo
                             showToast("Errore invio Email a " + socio.nome + " (Controlla template EmailJS)", "error");
                         });
                 }
@@ -835,6 +844,19 @@
             };
             reader.readAsText(file);
         };
+
+        // --- REGISTRAZIONE SERVICE WORKER (PWA) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registrato con successo. Scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('Registrazione Service Worker fallita:', error);
+                });
+            });
+        }
 
         window.onload = function() { initFirebase(); };
     </script>
