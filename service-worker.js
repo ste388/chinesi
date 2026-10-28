@@ -1,4 +1,4 @@
-const CACHE_NAME = 'Chinesi-v2';
+const CACHE_NAME = 'Chinesi-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -9,15 +9,10 @@ const ASSETS = [
 
 self.addEventListener('install', (evt) => {
   evt.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      // Carica i file singolarmente in modo che un singolo errore non blocchi l'installazione della PWA
-      for (const asset of ASSETS) {
-        try {
-          await cache.add(asset);
-        } catch (err) {
-          console.warn('Risorsa non trovata per la cache:', asset);
-        }
-      }
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS).catch(err => {
+        console.warn('Errore caricamento cache asset:', err);
+      });
     })
   );
   self.skipWaiting();
