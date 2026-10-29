@@ -5,21 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chinesi Center - Gestionale Palestra & Chinesiologia</title>
     
-    	<!-- PWA CONFIG -->
-	<link rel="manifest" href="manifest.json">
-	<meta name="theme-color" content="#ffd700">
-	<link rel="apple-touch-icon" href="icons/192.png">
-
-	<!-- REGISTRAZIONE SERVICE WORKER -->
-	<script>
-	  if ('serviceWorker' in navigator) {
-		window.addEventListener('load', () => {
-		  navigator.serviceWorker.register('sw.js')
-			.then(reg => console.log('Service Worker registrato!', reg))
-			.catch(err => console.log('Errore SW:', err));
-		});
-	  }
-	</script>
+    <!-- PWA Manifest & Meta -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0d47a1">
+    <link rel="apple-touch-icon" href="./icons/192.png">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -79,14 +68,22 @@
             <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4 pt-2">
                 <div>
                     <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Email</label>
-                    <input type="email" id="authEmail" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600" placeholder="info@chinesicenter.it">
+                    <input type="email" id="authEmail" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600" placeholder="info@chinesicenter.it" value="info@chinesicenter.it">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Password</label>
                     <input type="password" id="authPassword" required minlength="6" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600" placeholder="••••••••">
+                    
+                    <div class="flex justify-end mt-2">
+                        <button type="button" onclick="openPasswordModal()" class="text-xs font-medium text-medical-600 hover:text-medical-800 hover:underline transition">
+                            Cambia password?
+                        </button>
+                    </div>
                 </div>
+                
                 <div id="authError" class="text-xs text-rose-600 font-medium hidden"></div>
-                <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-medical-600 hover:bg-medical-700 text-white font-medium text-sm transition shadow-lg">
+                
+                <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-medical-600 hover:bg-medical-700 text-white font-medium text-sm transition shadow-lg mt-2">
                     Accedi al Gestionale
                 </button>
             </form>
@@ -120,7 +117,7 @@
                     <button type="button" onclick="toggleDropdown(event)" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm transition border border-slate-700">
                         <i class="fa-solid fa-file-arrow-down"></i> <span class="hidden md:inline">Report & Dati</span> <i class="fa-solid fa-chevron-down text-xs ml-0.5"></i>
                     </button>
-                    <div id="dropdownMenu" class="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 py-1 hidden z-50 text-slate-700">
+                    <div id="dropdownMenu" class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1 hidden z-50 text-slate-700">
                         <button onclick="printReport(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"><i class="fa-solid fa-print text-slate-600"></i> Stampa Report</button>
                         <button onclick="exportCSV(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2"><i class="fa-solid fa-file-excel text-emerald-600"></i> Esporta Excel</button>
                         <hr class="my-1 border-slate-100">
@@ -129,9 +126,11 @@
                             <i class="fa-solid fa-upload text-tealmed-600"></i> Importa JSON
                             <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event); closeDropdown();">
                         </label>
+                        <hr class="my-1 border-slate-100">
+                        <button onclick="openPasswordModal(); closeDropdown();" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2 text-amber-700 font-medium"><i class="fa-solid fa-key text-amber-500"></i> Cambia Password</button>
                     </div>
                 </div>
-                <button onclick="logoutUser()" class="bg-slate-800 hover:bg-rose-900/50 text-slate-300 hover:text-white px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm transition"><i class="fa-solid fa-right-from-bracket"></i></button>
+                <button onclick="logoutUser()" title="Disconnetti" class="bg-slate-800 hover:bg-rose-900/50 text-slate-300 hover:text-white px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm transition"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </header>
@@ -153,7 +152,6 @@
         
         <!-- DASHBOARD VIEW -->
         <div id="view-dashboard" class="space-y-6">
-            
             <!-- Welcome Banner -->
             <div class="bg-gradient-to-r from-medical-900 to-slate-900 rounded-2xl p-5 sm:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div class="absolute right-0 bottom-0 translate-x-10 translate-y-10 opacity-10 pointer-events-none">
@@ -220,6 +218,7 @@
 
             <!-- Box Notifiche: Certificati Scaduti e In Scadenza -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
                 <!-- BOX 1: CERTIFICATI MEDICI SCADUTI -->
                 <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80">
                     <div class="flex items-center justify-between mb-4">
@@ -232,23 +231,26 @@
                 </div>
 
                 <!-- BOX 2: CERTIFICATI MEDICI IN SCADENZA (30 GIORNI) -->
-                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 relative">
-                    <div class="absolute top-4 right-4 text-[10px] bg-medical-50 text-medical-700 px-2 py-1 rounded-full border border-medical-200 flex items-center gap-1" title="Le email partono all'apertura del gestionale">
-                        <i class="fa-solid fa-paper-plane"></i> Automazione Attiva
-                    </div>
-                    
-                    <div class="flex items-center justify-between mb-4 mt-2">
-                        <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
-                            <i class="fa-solid fa-file-medical text-amber-500"></i> Certificati in Scadenza (30 gg)
-                        </h3>
-                        <span id="badge-alert-med-expiring" class="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-semibold">0</span>
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-file-medical text-amber-500"></i> Certificati in Scadenza (30 gg)
+                            </h3>
+                            <!-- Badge Automazione spostato qui sotto -->
+                            <div class="mt-2 inline-flex text-[10px] bg-medical-50 text-medical-700 px-2 py-1 rounded-full border border-medical-200 items-center gap-1" title="Le email partono all'apertura del gestionale">
+                                <i class="fa-solid fa-paper-plane"></i> Automazione Attiva
+                            </div>
+                        </div>
+                        <span id="badge-alert-med-expiring" class="text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-semibold mt-0.5">0</span>
                     </div>
                     <div id="list-alert-med-expiring" class="space-y-3 max-h-72 overflow-y-auto pr-1"></div>
                 </div>
-            </div>
 
-            <!-- BOX 3: LOG EMAIL INVIATE -->
-            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80">
+            </div> <!-- CHIUSURA DELLA GRIGLIA A 2 COLONNE: FONDAMENTALE -->
+
+            <!-- BOX 3: LOG EMAIL INVIATE (TUTTA LARGHEZZA) -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 mt-6">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
                         <i class="fa-solid fa-list-check text-emerald-500"></i> Registro Email Automatiche Inviate
@@ -271,7 +273,8 @@
                     Nessuna email automatica inviata finora.
                 </div>
             </div>
-        </div>
+
+        </div> <!-- CHIUSURA DI view-dashboard -->
 
         <!-- SOCI / ANAGRAFICA VIEW -->
         <div id="view-soci" class="space-y-6 hidden">
@@ -312,7 +315,9 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
-                                <th class="py-4 px-4 sm:px-6">Socio & Contatti</th>
+                                <th class="py-4 px-4 sm:px-6 cursor-pointer hover:text-slate-800 transition" onclick="toggleSort()" title="Ordina per nome">
+    Socio & Contatti <i id="sortIcon" class="fa-solid fa-arrow-down-a-z ml-1 text-tealmed-600"></i>
+</th>
                                 <th class="py-4 px-3 sm:px-4 text-center">Tessera Associativa</th>
                                 <th class="py-4 px-3 sm:px-4 text-center">Certificato Medico</th>
                                 <th class="py-4 px-3 sm:px-4 text-center">Abbonamento</th>
@@ -322,7 +327,6 @@
                         <tbody id="sociTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
-                <!-- Empty State -->
                 <div id="emptyState" class="hidden p-12 text-center">
                     <h4 class="text-slate-700 font-semibold text-base">Nessun socio trovato</h4>
                 </div>
@@ -376,6 +380,42 @@
         </div>
     </div>
 
+    <!-- MODAL: CAMBIO PASSWORD -->
+    <div id="passwordModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 flex flex-col">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                <h3 class="text-base sm:text-lg font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-key text-amber-400"></i> Cambia Password d'Accesso
+                </h3>
+                <button type="button" onclick="closePasswordModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="passwordForm" onsubmit="handlePasswordChange(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Vecchia Password *</label>
+                    <input type="password" id="oldPassword" required minlength="6" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600" placeholder="••••••••">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nuova Password *</label>
+                    <input type="password" id="newPassword" required minlength="6" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600" placeholder="••••••••">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Conferma Nuova Password *</label>
+                    <input type="password" id="confirmNewPassword" required minlength="6" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600" placeholder="••••••••">
+                </div>
+
+                <div id="passwordError" class="text-xs text-rose-600 font-medium hidden"></div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closePasswordModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Annulla</button>
+                    <button type="submit" id="changePasswordBtn" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium transition shadow-sm">Aggiorna Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATION -->
     <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
         <div class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-800">
@@ -402,7 +442,6 @@
         let isFirebaseConnected = false;
         window.soci = [];
 
-        // GESTIONE CONNESSIONE E STATO
         window.addEventListener('online', updateNetworkStatus);
         window.addEventListener('offline', updateNetworkStatus);
 
@@ -449,15 +488,24 @@
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value;
             const errorDiv = document.getElementById('authError');
+            errorDiv.classList.add('hidden');
             try {
                 await auth.signInWithEmailAndPassword(email, password);
+                // Pulizia campo password dopo l'accesso
+                document.getElementById('authPassword').value = '';
             } catch (err) {
                 errorDiv.innerText = "Credenziali errate.";
                 errorDiv.classList.remove('hidden');
             }
         }
 
-        async function logoutUser() { if (auth) { await auth.signOut(); } }
+        async function logoutUser() { 
+            if (auth) { 
+                await auth.signOut();
+                // Ricarica la pagina per resettare la cache visiva
+                window.location.reload();
+            } 
+        }
 
         function setupFirestoreListener() {
             db.collection('soci').onSnapshot((snapshot) => {
@@ -474,9 +522,87 @@
             }, (error) => { 
                 console.error("Firestore error:", error); 
                 const syncStatusEl = document.getElementById('syncStatus');
-                syncStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Errore Sync`;
+                if (syncStatusEl) {
+                    syncStatusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-400"></i> Errore Sync`;
+                }
             });
         }
+
+        // --- GESTIONE CAMBIO PASSWORD SICURO ---
+        window.openPasswordModal = function() {
+            document.getElementById('passwordForm').reset();
+            document.getElementById('passwordError').classList.add('hidden');
+            document.getElementById('passwordModal').classList.remove('hidden');
+        };
+
+        window.closePasswordModal = function() {
+            document.getElementById('passwordModal').classList.add('hidden');
+        };
+
+        window.handlePasswordChange = async function(event) {
+            event.preventDefault();
+            
+            const oldPassword = document.getElementById('oldPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+            const errorDiv = document.getElementById('passwordError');
+            const submitBtn = document.getElementById('changePasswordBtn');
+
+            errorDiv.classList.add('hidden');
+
+            if (newPassword !== confirmNewPassword) {
+                errorDiv.innerText = "Le nuove password non coincidono.";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Aggiornamento in corso...";
+
+            try {
+                let user = firebase.auth().currentUser;
+                const emailInput = document.getElementById('authEmail').value.trim();
+                const email = emailInput ? emailInput : "info@chinesicenter.it";
+
+                if (!user) {
+                    // Esegue l'accesso in background per validare la vecchia password
+                    const userCred = await firebase.auth().signInWithEmailAndPassword(email, oldPassword);
+                    user = userCred.user;
+                } else {
+                    // Re-autentica se è già dentro
+                    const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPassword);
+                    await user.reauthenticateWithCredential(credential);
+                }
+
+                // Esegue il vero e proprio cambio
+                await user.updatePassword(newPassword);
+
+                closePasswordModal();
+                showToast("Password aggiornata! Effettua nuovamente il login.");
+                
+                // Disconnette l'utente per forzarlo ad accedere con le credenziali nuove pulite
+                await firebase.auth().signOut();
+                document.getElementById('authPassword').value = '';
+
+            } catch (error) {
+                console.error("Errore cambio password:", error);
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    errorDiv.innerText = "La vecchia password inserita non è corretta.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorDiv.innerText = "La nuova password deve contenere almeno 6 caratteri.";
+                } else if (error.code === 'auth/user-not-found') {
+                    errorDiv.innerText = "Nessun account associato a questa email.";
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorDiv.innerText = "Troppi tentativi errati. Riprova più tardi.";
+                } else {
+                    errorDiv.innerText = "Errore durante il cambio password. Riprova.";
+                }
+                errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Aggiorna Password";
+            }
+        };
 
         // --- INVIO EMAIL AUTOMATICO ---
         function checkScadenzeAndSendEmails() {
@@ -505,7 +631,6 @@
                             });
                         }, function(error) {
                             console.error('Errore invio EmailJS per', socio.email, error);
-                            showToast("Errore invio Email a " + socio.nome + " (Controlla template EmailJS)", "error");
                         });
                 }
             });
@@ -648,35 +773,98 @@
             }
         };
 
+        let sortDirection = 'asc'; // 'asc' per A-Z, 'desc' per Z-A
+
+        window.toggleSort = function() {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            const icon = document.getElementById('sortIcon');
+            if(icon) {
+                icon.className = sortDirection === 'asc' ? 'fa-solid fa-arrow-down-a-z ml-1 text-tealmed-600' : 'fa-solid fa-arrow-down-z-a ml-1 text-tealmed-600';
+            }
+            renderSociTable();
+        };
+
         window.renderSociTable = function() {
             const searchVal = document.getElementById('searchInput').value.toLowerCase();
             const filterStatus = document.getElementById('filterStatus').value;
             const tbody = document.getElementById('sociTableBody');
+            const emptyState = document.getElementById('emptyState');
             tbody.innerHTML = '';
             
+            // 1. FILTRAGGIO (Ricerca testuale + Menu a tendina)
             const filtered = window.soci.filter(s => {
                 const fullName = `${s.nome} ${s.cognome}`.toLowerCase();
-                return fullName.includes(searchVal); 
-            });
+                const matchSearch = fullName.includes(searchVal);
+                if (!matchSearch) return false;
 
-            filtered.forEach(s => {
                 const cardStat = getDateStatus(s.scadenzaTessera);
                 const medStat = getDateStatus(s.scadenzaCertificato);
                 const subStat = getDateStatus(s.scadenzaAbbonamento);
 
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                        <td class="py-3 px-4 sm:px-6"><div class="font-bold text-slate-900 text-sm whitespace-nowrap">${s.cognome} ${s.nome}</div></td>
-                        <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700">${cardStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaTessera)}</div></td>
-                        <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${medStat.color}-50 text-${medStat.color}-700">${medStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaCertificato)}</div></td>
-                        <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${subStat.color}-50 text-${subStat.color}-700">${subStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaAbbonamento)}</div></td>
-                        <td class="py-3 px-4 text-right whitespace-nowrap"><button onclick="openEditModal('${s.id}')" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition"><i class="fa-solid fa-pen text-xs"></i></button></td>
-                    </tr>
-                `;
+                if (filterStatus === 'all') return true;
+                if (filterStatus === 'sub_active') return subStat.status !== 'expired';
+                if (filterStatus === 'sub_expired') return subStat.status === 'expired';
+                if (filterStatus === 'med_expiring') return medStat.status === 'expiring';
+                if (filterStatus === 'med_expired') return medStat.status === 'expired';
+                if (filterStatus === 'card_expired') return cardStat.status === 'expired';
+                return true;
             });
+
+            // 2. ORDINAMENTO (Alfabetico per Cognome e Nome)
+            filtered.sort((a, b) => {
+                const nameA = `${a.cognome} ${a.nome}`.toLowerCase();
+                const nameB = `${b.cognome} ${b.nome}`.toLowerCase();
+                if (nameA < nameB) return sortDirection === 'asc' ? -1 : 1;
+                if (nameA > nameB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            // 3. GENERAZIONE TABELLA
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                filtered.forEach(s => {
+                    const cardStat = getDateStatus(s.scadenzaTessera);
+                    const medStat = getDateStatus(s.scadenzaCertificato);
+                    const subStat = getDateStatus(s.scadenzaAbbonamento);
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                            <td class="py-3 px-4 sm:px-6"><div class="font-bold text-slate-900 text-sm whitespace-nowrap">${s.cognome} ${s.nome}</div></td>
+                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700">${cardStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaTessera)}</div></td>
+                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${medStat.color}-50 text-${medStat.color}-700">${medStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaCertificato)}</div></td>
+                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${subStat.color}-50 text-${subStat.color}-700">${subStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaAbbonamento)}</div></td>
+                            <td class="py-3 px-4 text-right whitespace-nowrap">
+                                <button onclick="openEditModal('${s.id}')" title="Modifica" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                                <button onclick="deleteSocio('${s.id}')" title="Elimina" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition ml-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
         };
 
         window.filterSoci = function() { renderSociTable(); };
+
+        window.deleteSocio = async function(id) {
+            if (confirm("Sei sicuro di voler eliminare definitivamente questo socio? L'operazione non è reversibile.")) {
+                try {
+                    if (isFirebaseConnected && db) {
+                        await db.collection('soci').doc(id).delete();
+                    } else {
+                        // Elimina localmente se offline (verrà rimosso anche al riavvio)
+                        window.soci = window.soci.filter(s => s.id !== id);
+                        renderDashboard();
+                        renderSociTable();
+                    }
+                    showToast("Socio eliminato con successo!");
+                } catch (error) {
+                    console.error("Errore durante l'eliminazione:", error);
+                    showToast("Errore durante l'eliminazione del socio.", "error");
+                }
+            }
+        };
 
         window.openModal = function() {
             document.getElementById('socioId').value = '';
@@ -716,7 +904,7 @@
             if (id) {
                 const oldSocio = window.soci.find(s => s.id === id);
                 if (oldSocio && oldSocio.scadenzaCertificato !== newScadenzaCertificato) {
-                    avvisoData = ""; // Scadenza cambiata, log resettato per il nuovo certificato
+                    avvisoData = ""; 
                 }
             }
 
@@ -755,8 +943,6 @@
             setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3500);
         };
 
-        // --- GESTIONE MENU A TENDINA E ESPORTAZIONI DATI ---
-        
         window.toggleDropdown = function(event) {
             event.stopPropagation();
             const menu = document.getElementById('dropdownMenu');
@@ -845,16 +1031,12 @@
             reader.readAsText(file);
         };
 
-        // --- REGISTRAZIONE SERVICE WORKER (PWA) ---
+        // REGISTRAZIONE SERVICE WORKER
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
-                .then(registration => {
-                    console.log('Service Worker registrato con successo. Scope:', registration.scope);
-                })
-                .catch(error => {
-                    console.error('Registrazione Service Worker fallita:', error);
-                });
+                .then(reg => console.log('SW registrato:', reg.scope))
+                .catch(err => console.error('Errore SW:', err));
             });
         }
 
