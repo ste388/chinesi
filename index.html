@@ -150,6 +150,23 @@
     <!-- Content Body -->
     <main class="flex-1 overflow-y-auto max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         
+		<!-- BOX DATI NON SINCRONIZZATI (VISIBILE SOLO IN PRESENZA DI DATI OFFLINE) -->
+<div id="pendingSyncBox" class="hidden mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+    <div class="flex items-start gap-3 sm:gap-4">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0 text-lg">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <div class="w-full">
+            <h4 class="text-sm sm:text-base font-bold text-amber-900">Dati in attesa di sincronizzazione</h4>
+            <p class="text-xs sm:text-sm text-amber-700 mt-0.5">Hai effettuato delle modifiche offline. I seguenti profili verranno salvati sul cloud in automatico appena tornerà la connessione Internet.</p>
+            
+            <div id="pendingSyncList" class="mt-3 flex flex-wrap gap-2">
+                <!-- I badge dei soci in attesa appariranno qui -->
+            </div>
+        </div>
+    </div>
+</div>
+		
         <!-- DASHBOARD VIEW -->
         <div id="view-dashboard" class="space-y-6">
             <!-- Welcome Banner -->
@@ -460,10 +477,15 @@
             }
         }
 
-        function initFirebase() {
+function initFirebase() {
             if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
             db = firebase.firestore();
             auth = firebase.auth();
+
+            // ABILITA LA PERSISTENZA OFFLINE DI FIREBASE
+            db.enablePersistence().catch((err) => {
+                console.warn("Persistenza offline non supportata o schede multiple aperte:", err.code);
+            });
 
             if(EMAILJS_PUBLIC_KEY) {
                 emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -507,16 +529,29 @@
             } 
         }
 
-        function setupFirestoreListener() {
-            db.collection('soci').onSnapshot((snapshot) => {
+function setupFirestoreListener() {
+            // includeMetadataChanges: true permette di scatenare l'evento anche quando un file passa da offline a online
+            db.collection('soci').onSnapshot({ includeMetadataChanges: true }, (snapshot) => {
                 const loaded = [];
-                snapshot.forEach(docSnap => { loaded.push({ id: docSnap.id, ...docSnap.data() }); });
+                const pending = []; // Array per i dati offline
+                
+                snapshot.forEach(docSnap => { 
+                    const data = { id: docSnap.id, ...docSnap.data() };
+                    loaded.push(data);
+                    
+                    // Se il dato non è ancora arrivato al server, lo mettiamo in "pending"
+                    if (docSnap.metadata.hasPendingWrites) {
+                        pending.push(data);
+                    }
+                });
+                
                 window.soci = loaded;
+                window.pendingSoci = pending; // Salviamo globalmente
                 
                 updateNetworkStatus(); 
                 renderDashboard();
                 renderSociTable();
-                
+                renderPendingSyncBox(); // Renderizza il nuovo box
                 checkScadenzeAndSendEmails();
 
             }, (error) => { 
@@ -636,8 +671,10 @@
             });
         }
 
-        window.persistSocio = function(socioData) {
-            if (isFirebaseConnected && db) { db.collection('soci').doc(socioData.id).set(socioData); } 
+window.persistSocio = function(socioData) {
+            if (db) { 
+                db.collection('soci').doc(socioData.id).set(socioData).catch(err => console.error(err)); 
+            } 
         };
 
         window.formatDateIT = function(dateStr) {
@@ -844,25 +881,40 @@
                 });
             }
         };
+		
+		
+		window.renderPendingSyncBox = function() {
+            const box = document.getElementById('pendingSyncBox');
+            const list = document.getElementById('pendingSyncList');
+
+            // Nascondi il box se non ci sono modifiche in sospeso
+            if (!window.pendingSoci || window.pendingSoci.length === 0) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            // Mostra il box se ci sono dati offline
+            box.classList.remove('hidden');
+            list.innerHTML = '';
+
+            window.pendingSoci.forEach(socio => {
+                list.innerHTML += `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-white border border-amber-200 text-amber-800 shadow-sm">
+                        <i class="fa-solid fa-user-clock text-amber-500"></i> ${socio.cognome} ${socio.nome}
+                    </span>
+                `;
+            });
+        };
+		
 
         window.filterSoci = function() { renderSociTable(); };
 
-        window.deleteSocio = async function(id) {
+window.deleteSocio = function(id) {
             if (confirm("Sei sicuro di voler eliminare definitivamente questo socio? L'operazione non è reversibile.")) {
-                try {
-                    if (isFirebaseConnected && db) {
-                        await db.collection('soci').doc(id).delete();
-                    } else {
-                        // Elimina localmente se offline (verrà rimosso anche al riavvio)
-                        window.soci = window.soci.filter(s => s.id !== id);
-                        renderDashboard();
-                        renderSociTable();
-                    }
-                    showToast("Socio eliminato con successo!");
-                } catch (error) {
-                    console.error("Errore durante l'eliminazione:", error);
-                    showToast("Errore durante l'eliminazione del socio.", "error");
+                if (db) {
+                    db.collection('soci').doc(id).delete().catch(err => console.error(err));
                 }
+                showToast("Socio eliminato (in attesa di sync se offline).");
             }
         };
 
