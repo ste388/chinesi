@@ -67,7 +67,7 @@ async function run() {
             // FILTRO: Salta se l'abbonamento è scaduto, se manca l'email o se è già stata inviata oggi
             const subStat = getDateStatus(socio.scadenzaAbbonamento);
             if (subStat.status === 'expired') continue;
-            if (!socio.email || socio.dataInvioAvvisoCertificato === todayStr) continue;
+            if (!socio.email || socio.dataInvioAvvisoCertificato) continue;
 
             const medStat = getDateStatus(socio.scadenzaCertificato);
             if (medStat.status === 'expiring' && medStat.days <= 30 && medStat.days >= 0) {
