@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chinesi Center - Gestionale Palestra & Chinesiologia</title>
+    <title>Chinesi Center - Gestionale Palestra</title>
     
     <!-- PWA Manifest & Meta -->
     <link rel="manifest" href="./manifest.json">
@@ -632,16 +632,27 @@
             }
         };
 
+        // Blocco in memoria per evitare doppi invii simultanei all'avvio
+        const emailSendingInProgress = new Set();
+
         function checkScadenzeAndSendEmails() {
-            if(!EMAILJS_PUBLIC_KEY) return; 
+            if (!EMAILJS_PUBLIC_KEY) return; 
             const todayStr = new Date().toISOString().split('T')[0];
 
             window.soci.forEach(socio => {
-                if (!socio.email || socio.dataInvioAvvisoCertificato) return;
+                // FILTRO: Se l'abbonamento è scaduto, interrompe subito e passa al socio successivo
+                const subStat = getDateStatus(socio.scadenzaAbbonamento);
+                if (subStat.status === 'expired') return;
+
+                // Se manca la mail, se è già stata inviata oggi o se l'invio è in corso, salta!
+                if (!socio.email || socio.dataInvioAvvisoCertificato || emailSendingInProgress.has(socio.id)) return;
 
                 const medStat = getDateStatus(socio.scadenzaCertificato);
                 if (medStat.status === 'expiring' && medStat.days <= 30 && medStat.days >= 0) {
                     
+                    emailSendingInProgress.add(socio.id);
+                    socio.dataInvioAvvisoCertificato = todayStr; 
+
                     const templateParams = {
                         to_email: socio.email,
                         to_name: socio.nome + ' ' + socio.cognome,
@@ -657,6 +668,8 @@
                             }
                         }, function(error) {
                             console.error('Errore invio EmailJS per', socio.email, error);
+                            emailSendingInProgress.delete(socio.id);
+                            delete socio.dataInvioAvvisoCertificato;
                         });
                 }
             });
@@ -774,15 +787,26 @@
                 const subStat = getDateStatus(s.scadenzaAbbonamento);
                 const cardStat = getDateStatus(s.scadenzaTessera);
                 
-                if (subStat.status === 'active') activeSubCount++;
+                // Conteggio statistiche generali
+                if (subStat.status !== 'expired') activeSubCount++;
                 if (subStat.status === 'expired' || cardStat.status === 'expired') expiredTotalCount++;
 
-                if (medStat.status === 'expired') { medExpiredList.push({ socio: s, stat: medStat }); } 
-                else if (medStat.status === 'expiring') { medExpiringList.push({ socio: s, stat: medStat }); }
+                // FILTRO INTELLIGENTE: Mostra gli avvisi del certificato SOLO SE l'abbonamento è valido
+                if (subStat.status !== 'expired') {
+                    if (medStat.status === 'expired') { 
+                        medExpiredList.push({ socio: s, stat: medStat }); 
+                    } else if (medStat.status === 'expiring') { 
+                        medExpiringList.push({ socio: s, stat: medStat }); 
+                    }
+                }
 
-                if (s.dataInvioAvvisoCertificato) { emailSentList.push(s); }
+                // Log delle email inviate
+                if (s.dataInvioAvvisoCertificato) { 
+                    emailSentList.push(s); 
+                }
             });
 
+            // Aggiornamento dei contatori in alto
             document.getElementById('stat-total').innerText = window.soci.length;
             document.getElementById('stat-active-sub').innerText = activeSubCount;
             document.getElementById('stat-expiring-med').innerText = medExpiringList.length;
@@ -791,19 +815,26 @@
             document.getElementById('badge-alert-med-expired').innerText = medExpiredList.length;
             document.getElementById('badge-alert-med-expiring').innerText = medExpiringList.length;
 
+            // Popolamento BOX 1: Certificati Scaduti
             if (medExpiredList.length === 0) {
                 alertMedExpired.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato scaduto.</p>`;
             } else {
                 medExpiredList.forEach(item => {
                     alertMedExpired.innerHTML += `
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                            <div><p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome}</p><p class="text-[11px] sm:text-xs text-slate-500">Scaduto il: ${formatDateIT(item.socio.scadenzaCertificato)}</p></div>
-                            <div class="flex items-center gap-1.5"><span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-rose-100 text-rose-700">${item.stat.label}</span>
-                            <button onclick="openEditModal('${item.socio.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button></div>
+                            <div>
+                                <p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome}</p>
+                                <p class="text-[11px] sm:text-xs text-slate-500">Scaduto il: ${formatDateIT(item.socio.scadenzaCertificato)}</p>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-rose-100 text-rose-700">${item.stat.label}</span>
+                                <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                            </div>
                         </div>`;
                 });
             }
 
+            // Popolamento BOX 2: Certificati in Scadenza
             if (medExpiringList.length === 0) {
                 alertMedExpiring.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato in scadenza nei prossimi 30 giorni.</p>`;
             } else {
@@ -814,13 +845,19 @@
 
                     alertMedExpiring.innerHTML += `
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                            <div><p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome} ${mailInviataIcon}</p><p class="text-[11px] sm:text-xs text-slate-500">Scadenza: ${formatDateIT(item.socio.scadenzaCertificato)}</p></div>
-                            <div class="flex items-center gap-1.5"><span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">${item.stat.label}</span>
-                            <button onclick="openEditModal('${item.socio.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button></div>
+                            <div>
+                                <p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome} ${mailInviataIcon}</p>
+                                <p class="text-[11px] sm:text-xs text-slate-500">Scadenza: ${formatDateIT(item.socio.scadenzaCertificato)}</p>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">${item.stat.label}</span>
+                                <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                            </div>
                         </div>`;
                 });
             }
 
+            // Popolamento BOX 3: Registro Email
             if (emailSentList.length === 0) {
                 logEmailContainer.parentElement.classList.add('hidden');
                 emptyLogState.classList.remove('hidden');
@@ -828,6 +865,7 @@
                 logEmailContainer.parentElement.classList.remove('hidden');
                 emptyLogState.classList.add('hidden');
                 
+                // Ordina dalla più recente alla più vecchia
                 emailSentList.sort((a, b) => new Date(b.dataInvioAvvisoCertificato) - new Date(a.dataInvioAvvisoCertificato));
 
                 emailSentList.forEach(socio => {
