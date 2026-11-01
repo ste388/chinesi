@@ -1,0 +1,28 @@
+name: Invio Email Automatiche
+
+on:
+  schedule:
+    # 07:30 UTC corrisponde alle 08:30 in Italia (solare) / 09:30 (legale)
+    - cron: '30 7 * * *'
+  workflow_dispatch: # Questo ci permette di avviarlo a mano per provarlo!
+
+jobs:
+  check-and-send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del codice
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Installa il modulo Firebase
+        run: npm install firebase-admin
+        
+      - name: Esegui lo script di invio
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          EMAILJS_PRIVATE_KEY: ${{ secrets.EMAILJS_PRIVATE_KEY }}
+        run: node send-emails.js
