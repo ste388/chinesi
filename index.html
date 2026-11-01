@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chinesi Center - Gestionale Palestra</title>
+    <title>Chinesi Center - Gestionale Palestra & Chinesiologia</title>
     
     <!-- PWA Manifest & Meta -->
     <link rel="manifest" href="./manifest.json">
@@ -46,7 +46,6 @@
             header, nav, .no-print, button, .dropdown-menu { display: none !important; }
             #pendingSyncBox { display: none !important; }
             #view-dashboard { display: none !important; }
-            #view-soci { display: block !important; }
             .shadow-sm, .shadow-2xl, .border { box-shadow: none !important; border: none !important; }
             table { width: 100% !important; border-collapse: collapse !important; font-size: 11px !important; }
             th, td { border: 1px solid #cbd5e1 !important; padding: 6px 8px !important; }
@@ -137,13 +136,16 @@
     </header>
 
     <!-- Main Navigation Tabs -->
-    <nav class="bg-white border-b border-slate-200 shrink-0 no-print">
+    <nav class="bg-white border-b border-slate-200 shrink-0 no-print overflow-x-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-4 sm:space-x-8">
-            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3.5 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm border-medical-600 text-medical-700 flex items-center gap-1.5 sm:gap-2">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3.5 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm border-medical-600 text-medical-700 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-chart-pie"></i> Dashboard & Scadenze
             </button>
-            <button onclick="switchTab('soci')" id="tab-soci" class="py-3.5 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-1.5 sm:gap-2">
+            <button onclick="switchTab('soci')" id="tab-soci" class="py-3.5 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-users"></i> Anagrafica Soci
+            </button>
+            <button onclick="switchTab('archivio')" id="tab-archivio" class="py-3.5 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-box-archive"></i> Archivio
             </button>
         </div>
     </nav>
@@ -186,9 +188,9 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                 <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
                     <div>
-                        <p class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Soci Totali</p>
+                        <p class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Soci Attivi</p>
                         <h3 id="stat-total" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">0</h3>
-                        <p class="text-xs text-slate-500 mt-1"><span class="text-tealmed-600 font-medium">Registrati</span> nel sistema</p>
+                        <p class="text-xs text-slate-500 mt-1"><span class="text-tealmed-600 font-medium">Registrati</span> e non in archivio</p>
                     </div>
                     <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-medical-50 text-medical-600 flex items-center justify-center text-xl sm:text-2xl">
                         <i class="fa-solid fa-users"></i>
@@ -221,7 +223,7 @@
                     <div>
                         <p class="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">Scadenze Critiche</p>
                         <h3 id="stat-expired-total" class="text-2xl sm:text-3xl font-bold text-rose-600 mt-1">0</h3>
-                        <p class="text-xs text-slate-500 mt-1">Tessere o abbonamenti scaduti</p>
+                        <p class="text-xs text-slate-500 mt-1">Tessere o abbonamenti (max 30g)</p>
                     </div>
                     <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl sm:text-2xl">
                         <i class="fa-solid fa-triangle-exclamation"></i>
@@ -292,14 +294,14 @@
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </span>
-                    <input type="text" id="searchInput" oninput="filterSoci()" placeholder="Cerca socio..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600">
+                    <input type="text" id="searchInput" oninput="filterSoci()" placeholder="Cerca socio attivo..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600">
                 </div>
                 
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
                     <select id="filterStatus" onchange="filterSoci()" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm">
                         <option value="all">Tutti gli stati</option>
                         <option value="sub_active">Abbonamento Attivo</option>
-                        <option value="sub_expired">Abbonamento Scaduto</option>
+                        <option value="sub_expired">Abbonamento Scaduto (Max 30g)</option>
                         <option value="med_expiring">Certificato in Scadenza</option>
                         <option value="med_expired">Certificato Scaduto</option>
                         <option value="card_expired">Tessera Scaduta</option>
@@ -312,7 +314,7 @@
             </div>
 
             <div class="hidden print:block mb-4 text-center">
-                <h2 class="text-2xl font-bold">Chinesi Center - Report Elenco Soci & Scadenze</h2>
+                <h2 class="text-2xl font-bold">Chinesi Center - Report Elenco Soci Attivi</h2>
                 <p class="text-xs text-slate-600">Generato il <span id="printDate"></span></p>
             </div>
 
@@ -338,6 +340,42 @@
                 </div>
             </div>
         </div>
+
+        <!-- ARCHIVIO VIEW -->
+        <div id="view-archivio" class="space-y-6 hidden">
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 flex flex-col md:flex-row gap-3 items-center justify-between no-print">
+                <div class="relative w-full md:w-80">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="searchArchivioInput" oninput="renderArchivioTable()" placeholder="Cerca in archivio..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600">
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                                <th class="py-4 px-4 sm:px-6 cursor-pointer hover:text-slate-800 transition" onclick="toggleSortArchivio()">
+                                    Socio Archiviato <i id="sortIconArchivio" class="fa-solid fa-arrow-down-a-z ml-1 text-tealmed-600"></i>
+                                </th>
+                                <th class="py-4 px-3 sm:px-4 text-center">Tessera Associativa</th>
+                                <th class="py-4 px-3 sm:px-4 text-center">Certificato Medico</th>
+                                <th class="py-4 px-3 sm:px-4 text-center">Abbonamento</th>
+                                <th class="py-4 px-4 sm:px-6 text-right no-print">Azioni Rapide</th>
+                            </tr>
+                        </thead>
+                        <tbody id="archivioTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+                <div id="emptyArchivioState" class="hidden p-12 text-center">
+                    <h4 class="text-slate-700 font-semibold text-base">L'archivio è vuoto</h4>
+                    <p class="text-xs text-slate-500 mt-1">I soci con abbonamento scaduto da più di 30 giorni appariranno qui.</p>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- MODAL: ADD / EDIT SOCIO -->
@@ -447,6 +485,7 @@
         window.soci = [];
         window.pendingSoci = [];
         let sortDirection = 'asc';
+        let sortDirectionArchivio = 'asc';
 
         window.addEventListener('online', updateNetworkStatus);
         window.addEventListener('offline', updateNetworkStatus);
@@ -521,10 +560,7 @@
                 snapshot.forEach(docSnap => { 
                     const data = { id: docSnap.id, ...docSnap.data() };
                     loaded.push(data);
-                    
-                    if (docSnap.metadata.hasPendingWrites) {
-                        pending.push(data);
-                    }
+                    if (docSnap.metadata.hasPendingWrites) { pending.push(data); }
                 });
                 
                 window.soci = loaded;
@@ -533,6 +569,7 @@
                 updateNetworkStatus(); 
                 renderDashboard();
                 renderSociTable();
+                renderArchivioTable();
                 renderPendingSyncBox();
                 checkScadenzeAndSendEmails();
 
@@ -571,13 +608,10 @@
             document.getElementById('passwordModal').classList.remove('hidden');
         };
 
-        window.closePasswordModal = function() {
-            document.getElementById('passwordModal').classList.add('hidden');
-        };
+        window.closePasswordModal = function() { document.getElementById('passwordModal').classList.add('hidden'); };
 
         window.handlePasswordChange = async function(event) {
             event.preventDefault();
-            
             const oldPassword = document.getElementById('oldPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             const confirmNewPassword = document.getElementById('confirmNewPassword').value;
@@ -615,16 +649,8 @@
                 
                 await firebase.auth().signOut();
                 document.getElementById('authPassword').value = '';
-
             } catch (error) {
-                console.error("Errore cambio password:", error);
-                if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    errorDiv.innerText = "La vecchia password inserita non è corretta.";
-                } else if (error.code === 'auth/weak-password') {
-                    errorDiv.innerText = "La nuova password deve contenere almeno 6 caratteri.";
-                } else {
-                    errorDiv.innerText = "Errore durante il cambio password. Riprova.";
-                }
+                errorDiv.innerText = "Errore durante il cambio password. Verifica la vecchia password.";
                 errorDiv.classList.remove('hidden');
             } finally {
                 submitBtn.disabled = false;
@@ -632,19 +658,16 @@
             }
         };
 
-        // Blocco in memoria per evitare doppi invii simultanei all'avvio
         const emailSendingInProgress = new Set();
-
         function checkScadenzeAndSendEmails() {
             if (!EMAILJS_PUBLIC_KEY) return; 
             const todayStr = new Date().toISOString().split('T')[0];
 
             window.soci.forEach(socio => {
-                // FILTRO: Se l'abbonamento è scaduto, interrompe subito e passa al socio successivo
+                // Filtro: non inviare email se l'abbonamento è scaduto
                 const subStat = getDateStatus(socio.scadenzaAbbonamento);
                 if (subStat.status === 'expired') return;
 
-                // Se manca la mail, se è già stata inviata oggi o se l'invio è in corso, salta!
                 if (!socio.email || socio.dataInvioAvvisoCertificato || emailSendingInProgress.has(socio.id)) return;
 
                 const medStat = getDateStatus(socio.scadenzaCertificato);
@@ -667,7 +690,6 @@
                                 }).catch(err => console.error(err));
                             }
                         }, function(error) {
-                            console.error('Errore invio EmailJS per', socio.email, error);
                             emailSendingInProgress.delete(socio.id);
                             delete socio.dataInvioAvvisoCertificato;
                         });
@@ -677,19 +699,11 @@
 
         window.resendEmail = function(socioId) {
             if (!EMAILJS_PUBLIC_KEY) return;
-            
             const socio = window.soci.find(s => s.id === socioId);
-            if (!socio || !socio.email) {
-                showToast("Errore: indirizzo email mancante.", "error");
-                return;
-            }
-
-            if (!confirm(`Vuoi inviare nuovamente l'email di avviso a ${socio.nome} ${socio.cognome}?`)) {
-                return;
-            }
+            if (!socio || !socio.email) { showToast("Errore: indirizzo email mancante.", "error"); return; }
+            if (!confirm(`Vuoi inviare nuovamente l'email di avviso a ${socio.nome} ${socio.cognome}?`)) { return; }
 
             showToast("Invio email in corso...");
-
             const templateParams = {
                 to_email: socio.email,
                 to_name: socio.nome + ' ' + socio.cognome,
@@ -700,28 +714,21 @@
                 .then(function(response) {
                     const todayStr = new Date().toISOString().split('T')[0];
                     if (isFirebaseConnected && db) {
-                        db.collection('soci').doc(socio.id).update({
-                            dataInvioAvvisoCertificato: todayStr
-                        }).catch(err => console.error(err));
+                        db.collection('soci').doc(socio.id).update({ dataInvioAvvisoCertificato: todayStr }).catch(err => console.error(err));
                     }
                     showToast("Email inviata con successo!");
                 }, function(error) {
-                    console.error('Errore invio EmailJS per', socio.email, error);
                     showToast("Errore durante l'invio dell'email.", "error");
                 });
         };
 
         window.persistSocio = function(socioData) {
-            if (db) { 
-                db.collection('soci').doc(socioData.id).set(socioData).catch(err => console.error(err)); 
-            } 
+            if (db) { db.collection('soci').doc(socioData.id).set(socioData).catch(err => console.error(err)); } 
         };
 
         window.deleteSocio = function(id) {
             if (confirm("Sei sicuro di voler eliminare definitivamente questo socio? L'operazione non è reversibile.")) {
-                if (db) {
-                    db.collection('soci').doc(id).delete().catch(err => console.error(err));
-                }
+                if (db) { db.collection('soci').doc(id).delete().catch(err => console.error(err)); }
                 showToast("Socio eliminato (in attesa di sync se offline).");
             }
         };
@@ -734,22 +741,24 @@
         };
 
         window.switchTab = function(tabName) {
-            const dashView = document.getElementById('view-dashboard');
-            const sociView = document.getElementById('view-soci');
-            const tabDash = document.getElementById('tab-dashboard');
-            const tabSoci = document.getElementById('tab-soci');
+            const views = ['dashboard', 'soci', 'archivio'];
+            views.forEach(v => {
+                const viewEl = document.getElementById(`view-${v}`);
+                const tabEl = document.getElementById(`tab-${v}`);
+                if (v === tabName) {
+                    viewEl.classList.remove('hidden');
+                    tabEl.classList.add('border-medical-600', 'text-medical-700');
+                    tabEl.classList.remove('border-transparent', 'text-slate-500');
+                } else {
+                    viewEl.classList.add('hidden');
+                    tabEl.classList.remove('border-medical-600', 'text-medical-700');
+                    tabEl.classList.add('border-transparent', 'text-slate-500');
+                }
+            });
 
-            if (tabName === 'dashboard') {
-                dashView.classList.remove('hidden'); sociView.classList.add('hidden');
-                tabDash.classList.add('border-medical-600', 'text-medical-700'); tabDash.classList.remove('border-transparent', 'text-slate-500');
-                tabSoci.classList.remove('border-medical-600', 'text-medical-700'); tabSoci.classList.add('border-transparent', 'text-slate-500');
-                renderDashboard();
-            } else {
-                dashView.classList.add('hidden'); sociView.classList.remove('hidden');
-                tabSoci.classList.add('border-medical-600', 'text-medical-700'); tabSoci.classList.remove('border-transparent', 'text-slate-500');
-                tabDash.classList.remove('border-medical-600', 'text-medical-700'); tabDash.classList.add('border-transparent', 'text-slate-500');
-                renderSociTable();
-            }
+            if (tabName === 'dashboard') renderDashboard();
+            if (tabName === 'soci') renderSociTable();
+            if (tabName === 'archivio') renderArchivioTable();
         };
 
         window.getDateStatus = function(dateString) {
@@ -763,6 +772,13 @@
             if (diffDays < 0) { return { status: 'expired', label: 'Scaduto (' + Math.abs(diffDays) + 'g fa)', color: 'rose', days: diffDays }; } 
             else if (diffDays <= 30) { return { status: 'expiring', label: 'Scade tra ' + diffDays + 'g', color: 'amber', days: diffDays }; } 
             else { return { status: 'active', label: 'Regolare (' + diffDays + 'g)', color: 'emerald', days: diffDays }; }
+        };
+
+        // FUNZIONE CONTROLLO ARCHIVIO: Vero se l'abbonamento è scaduto da oltre 30 giorni (diffDays < -30)
+        window.isArchived = function(socio) {
+            if (!socio.scadenzaAbbonamento) return false;
+            const stat = getDateStatus(socio.scadenzaAbbonamento);
+            return stat.status === 'expired' && stat.days < -30;
         };
 
         window.renderDashboard = function() {
@@ -779,35 +795,32 @@
             let medExpiringList = [];
             let emailSentList = []; 
             
+            let activeSociCount = 0;
             let activeSubCount = 0;
             let expiredTotalCount = 0;
 
             window.soci.forEach(s => {
+                // Se il socio è archiviato, LO IGNORIAMO TOTALMENTE NELLA DASHBOARD
+                if (isArchived(s)) return;
+
+                activeSociCount++;
                 const medStat = getDateStatus(s.scadenzaCertificato);
                 const subStat = getDateStatus(s.scadenzaAbbonamento);
                 const cardStat = getDateStatus(s.scadenzaTessera);
                 
-                // Conteggio statistiche generali
                 if (subStat.status !== 'expired') activeSubCount++;
                 if (subStat.status === 'expired' || cardStat.status === 'expired') expiredTotalCount++;
 
-                // FILTRO INTELLIGENTE: Mostra gli avvisi del certificato SOLO SE l'abbonamento è valido
                 if (subStat.status !== 'expired') {
-                    if (medStat.status === 'expired') { 
-                        medExpiredList.push({ socio: s, stat: medStat }); 
-                    } else if (medStat.status === 'expiring') { 
-                        medExpiringList.push({ socio: s, stat: medStat }); 
-                    }
+                    if (medStat.status === 'expired') { medExpiredList.push({ socio: s, stat: medStat }); } 
+                    else if (medStat.status === 'expiring') { medExpiringList.push({ socio: s, stat: medStat }); }
                 }
 
-                // Log delle email inviate
-                if (s.dataInvioAvvisoCertificato) { 
-                    emailSentList.push(s); 
-                }
+                if (s.dataInvioAvvisoCertificato) { emailSentList.push(s); }
             });
 
-            // Aggiornamento dei contatori in alto
-            document.getElementById('stat-total').innerText = window.soci.length;
+            // "Soci Attivi" mostra solo il totale dei NON archiviati
+            document.getElementById('stat-total').innerText = activeSociCount;
             document.getElementById('stat-active-sub').innerText = activeSubCount;
             document.getElementById('stat-expiring-med').innerText = medExpiringList.length;
             document.getElementById('stat-expired-total').innerText = expiredTotalCount;
@@ -815,57 +828,39 @@
             document.getElementById('badge-alert-med-expired').innerText = medExpiredList.length;
             document.getElementById('badge-alert-med-expiring').innerText = medExpiringList.length;
 
-            // Popolamento BOX 1: Certificati Scaduti
-            if (medExpiredList.length === 0) {
+if (medExpiredList.length === 0) {
                 alertMedExpired.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato scaduto.</p>`;
             } else {
                 medExpiredList.forEach(item => {
                     alertMedExpired.innerHTML += `
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                            <div>
-                                <p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome}</p>
-                                <p class="text-[11px] sm:text-xs text-slate-500">Scaduto il: ${formatDateIT(item.socio.scadenzaCertificato)}</p>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-rose-100 text-rose-700">${item.stat.label}</span>
-                                <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                            </div>
+                            <div><p class="font-semibold text-slate-800">${item.socio.cognome} ${item.socio.nome}</p><p class="text-[11px] sm:text-xs text-slate-500">Scaduto il: ${formatDateIT(item.socio.scadenzaCertificato)}</p></div>
+                            <div class="flex items-center gap-1.5"><span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-rose-100 text-rose-700">${item.stat.label}</span>
+                            <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button></div>
                         </div>`;
                 });
             }
 
-            // Popolamento BOX 2: Certificati in Scadenza
             if (medExpiringList.length === 0) {
                 alertMedExpiring.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato in scadenza nei prossimi 30 giorni.</p>`;
             } else {
                 medExpiringList.forEach(item => {
-                    const mailInviataIcon = item.socio.dataInvioAvvisoCertificato 
-                        ? `<i class="fa-solid fa-envelope-circle-check text-emerald-500 ml-1" title="Email inviata"></i>` 
-                        : ``;
-
+                    const mailInviataIcon = item.socio.dataInvioAvvisoCertificato ? `<i class="fa-solid fa-envelope-circle-check text-emerald-500 ml-1" title="Email inviata"></i>` : ``;
                     alertMedExpiring.innerHTML += `
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                            <div>
-                                <p class="font-semibold text-slate-800">${item.socio.nome} ${item.socio.cognome} ${mailInviataIcon}</p>
-                                <p class="text-[11px] sm:text-xs text-slate-500">Scadenza: ${formatDateIT(item.socio.scadenzaCertificato)}</p>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">${item.stat.label}</span>
-                                <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                            </div>
+                            <div><p class="font-semibold text-slate-800">${item.socio.cognome} ${item.socio.nome} ${mailInviataIcon}</p><p class="text-[11px] sm:text-xs text-slate-500">Scadenza: ${formatDateIT(item.socio.scadenzaCertificato)}</p></div>
+                            <div class="flex items-center gap-1.5"><span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">${item.stat.label}</span>
+                            <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button></div>
                         </div>`;
                 });
             }
 
-            // Popolamento BOX 3: Registro Email
             if (emailSentList.length === 0) {
                 logEmailContainer.parentElement.classList.add('hidden');
                 emptyLogState.classList.remove('hidden');
             } else {
                 logEmailContainer.parentElement.classList.remove('hidden');
                 emptyLogState.classList.add('hidden');
-                
-                // Ordina dalla più recente alla più vecchia
                 emailSentList.sort((a, b) => new Date(b.dataInvioAvvisoCertificato) - new Date(a.dataInvioAvvisoCertificato));
 
                 emailSentList.forEach(socio => {
@@ -875,14 +870,10 @@
                             <td class="py-3 px-4 font-semibold text-slate-900">${socio.cognome} ${socio.nome}</td>
                             <td class="py-3 px-4 text-slate-600">${socio.email}</td>
                             <td class="py-3 px-4 text-center">
-                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">
-                                    <i class="fa-solid fa-check"></i> Inviata
-                                </span>
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-check"></i> Inviata</span>
                             </td>
                             <td class="py-3 px-4 text-right">
-                                <button onclick="resendEmail('${socio.id}')" title="Invia di nuovo" class="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-medical-100 hover:text-medical-700 text-slate-600 transition">
-                                    <i class="fa-solid fa-paper-plane"></i>
-                                </button>
+                                <button onclick="resendEmail('${socio.id}')" title="Invia di nuovo" class="p-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-medical-100 hover:text-medical-700 text-slate-600 transition"><i class="fa-solid fa-paper-plane"></i></button>
                             </td>
                         </tr>`;
                 });
@@ -892,10 +883,15 @@
         window.toggleSort = function() {
             sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
             const icon = document.getElementById('sortIcon');
-            if(icon) {
-                icon.className = sortDirection === 'asc' ? 'fa-solid fa-arrow-down-a-z ml-1 text-tealmed-600' : 'fa-solid fa-arrow-down-z-a ml-1 text-tealmed-600';
-            }
+            if(icon) { icon.className = sortDirection === 'asc' ? 'fa-solid fa-arrow-down-a-z ml-1 text-tealmed-600' : 'fa-solid fa-arrow-down-z-a ml-1 text-tealmed-600'; }
             renderSociTable();
+        };
+
+        window.toggleSortArchivio = function() {
+            sortDirectionArchivio = sortDirectionArchivio === 'asc' ? 'desc' : 'asc';
+            const icon = document.getElementById('sortIconArchivio');
+            if(icon) { icon.className = sortDirectionArchivio === 'asc' ? 'fa-solid fa-arrow-down-a-z ml-1 text-tealmed-600' : 'fa-solid fa-arrow-down-z-a ml-1 text-tealmed-600'; }
+            renderArchivioTable();
         };
 
         window.renderSociTable = function() {
@@ -906,6 +902,8 @@
             tbody.innerHTML = '';
             
             const filtered = window.soci.filter(s => {
+                if (isArchived(s)) return false; // ESCLUDE I SOCI ARCHIVIATI DALL'ANAGRAFICA
+
                 const fullName = `${s.nome} ${s.cognome}`.toLowerCase();
                 if (!fullName.includes(searchVal)) return false;
 
@@ -949,8 +947,54 @@
                                 <button onclick="openEditModal('${s.id}')" title="Modifica" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition"><i class="fa-solid fa-pen text-xs"></i></button>
                                 <button onclick="deleteSocio('${s.id}')" title="Elimina" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition ml-1"><i class="fa-solid fa-trash text-xs"></i></button>
                             </td>
-                        </tr>
-                    `;
+                        </tr>`;
+                });
+            }
+        };
+
+        window.renderArchivioTable = function() {
+            const searchVal = document.getElementById('searchArchivioInput')?.value.toLowerCase() || '';
+            const tbody = document.getElementById('archivioTableBody');
+            const emptyState = document.getElementById('emptyArchivioState');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            
+            const archivedSoci = window.soci.filter(s => {
+                if (!isArchived(s)) return false; // MOSTRA SOLO GLI ARCHIVIATI
+                const fullName = `${s.nome} ${s.cognome}`.toLowerCase();
+                return fullName.includes(searchVal);
+            });
+
+            archivedSoci.sort((a, b) => {
+                const nameA = `${a.cognome} ${a.nome}`.toLowerCase();
+                const nameB = `${b.cognome} ${b.nome}`.toLowerCase();
+                if (nameA < nameB) return sortDirectionArchivio === 'asc' ? -1 : 1;
+                if (nameA > nameB) return sortDirectionArchivio === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            if (archivedSoci.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                archivedSoci.forEach(s => {
+                    const cardStat = getDateStatus(s.scadenzaTessera);
+                    const medStat = getDateStatus(s.scadenzaCertificato);
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100 opacity-80">
+                            <td class="py-3 px-4 sm:px-6"><div class="font-bold text-slate-700 text-sm whitespace-nowrap">${s.cognome} ${s.nome}</div></td>
+                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700">${cardStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaTessera)}</div></td>
+                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${medStat.color}-50 text-${medStat.color}-700">${medStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaCertificato)}</div></td>
+                            <td class="py-3 px-3 text-center whitespace-nowrap">
+                                <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700"><i class="fa-solid fa-box-archive mr-1"></i> Archiviato</span>
+                                <div class="text-xs text-slate-500 mt-1">Scaduto il ${formatDateIT(s.scadenzaAbbonamento)}</div>
+                            </td>
+                            <td class="py-3 px-4 text-right whitespace-nowrap">
+                                <button onclick="openEditModal('${s.id}')" title="Ripristina / Modifica" class="p-2 rounded-xl bg-tealmed-50 text-tealmed-700 hover:bg-tealmed-100 transition"><i class="fa-solid fa-arrow-rotate-left text-xs"></i></button>
+                                <button onclick="deleteSocio('${s.id}')" title="Elimina defintivamente" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition ml-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </td>
+                        </tr>`;
                 });
             }
         };
@@ -994,9 +1038,7 @@
             let avvisoData = document.getElementById('dataInvioAvvisoCertificato').value;
             if (id) {
                 const oldSocio = window.soci.find(s => s.id === id);
-                if (oldSocio && oldSocio.scadenzaCertificato !== newScadenzaCertificato) {
-                    avvisoData = ""; 
-                }
+                if (oldSocio && oldSocio.scadenzaCertificato !== newScadenzaCertificato) { avvisoData = ""; }
             }
 
             const socioData = {
@@ -1039,12 +1081,10 @@
             const menu = document.getElementById('dropdownMenu');
             if (menu) menu.classList.toggle('hidden');
         };
-
         window.closeDropdown = function() {
             const menu = document.getElementById('dropdownMenu');
             if (menu) menu.classList.add('hidden');
         };
-
         window.addEventListener('click', function(e) {
             const menu = document.getElementById('dropdownMenu');
             if (menu && !menu.contains(e.target)) { menu.classList.add('hidden'); }
@@ -1072,7 +1112,6 @@
                 ];
                 csvContent += row.join(";") + "\n";
             });
-
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -1105,27 +1144,20 @@
                     if (Array.isArray(imported)) {
                         window.soci = imported;
                         if (isFirebaseConnected && db) {
-                            for (let s of window.soci) {
-                                await db.collection('soci').doc(s.id).set(s);
-                            }
+                            for (let s of window.soci) { await db.collection('soci').doc(s.id).set(s); }
                         }
                         renderDashboard();
                         renderSociTable();
+                        renderArchivioTable();
                         showToast("Database importato con successo!");
-                    } else {
-                        showToast("File JSON non valido.", "error");
-                    }
-                } catch(err) {
-                    showToast("Errore durante la lettura del file JSON.", "error");
-                }
+                    } else { showToast("File JSON non valido.", "error"); }
+                } catch(err) { showToast("Errore durante la lettura del file JSON.", "error"); }
             };
             reader.readAsText(file);
         };
 
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js').catch(err => console.error('Errore SW:', err));
-            });
+            window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js').catch(err => console.error('Errore SW:', err)); });
         }
 
         window.onload = function() { initFirebase(); };
