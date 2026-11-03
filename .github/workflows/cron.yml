@@ -2,7 +2,8 @@ name: Invio Email Automatiche
 
 on:
   schedule:
-    - cron: '30 5,6,7,8,9,10 * * *'
+    # Tenta l'avvio ogni ora dall'1:30 alle 06:30 di notte (ora italiana)
+    - cron: '30 0,1,2,3,4,5 * * *'
   workflow_dispatch: 
 
 jobs:
