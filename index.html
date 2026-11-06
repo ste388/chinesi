@@ -260,11 +260,14 @@
                 </div>
             </div>
 
-            <!-- BOX 3 -->
+           <!-- BOX 3 -->
             <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200/80 mt-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                    <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2 flex-wrap">
                         <i class="fa-solid fa-list-check text-emerald-500"></i> Registro Email Automatiche Inviate
+                        <span id="badgeEmail" class="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-100 text-[11px] sm:text-xs font-medium">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Caricamento...
+                        </span>
                     </h3>
                 </div>
                 <div class="overflow-x-auto">
@@ -572,6 +575,8 @@
                 renderArchivioTable();
                 renderPendingSyncBox();
              // checkScadenzeAndSendEmails();
+			 
+                aggiornaContatoreEmail();
 
             }, (error) => { 
                 console.error("Firestore error:", error); 
@@ -581,6 +586,42 @@
                 }
             });
         }
+
+// --- LOGICA CONTATORE EMAILJS ---
+function calcolaDataReset() {
+    const oggi = new Date();
+    let giornoReset = new Date(oggi.getFullYear(), oggi.getMonth(), 28);
+    if (oggi.getDate() >= 28) {
+        giornoReset.setMonth(giornoReset.getMonth() + 1);
+    }
+    return giornoReset;
+}
+
+function getCicloId() {
+    const reset = calcolaDataReset();
+    return `${reset.getFullYear()}_${String(reset.getMonth() + 1).padStart(2, '0')}`;
+}
+
+async function aggiornaContatoreEmail() {
+    try {
+        const ciclo = getCicloId(); 
+        const docRef = db.collection('impostazioni').doc('email_' + ciclo);
+        const docSnap = await docRef.get();
+        
+        let inviate = 0;
+        if (docSnap.exists) {
+            inviate = docSnap.data().inviate || 0;
+        }
+        
+        const disponibili = 200 - inviate;
+        const formattata = calcolaDataReset().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+        
+        document.getElementById('badgeEmail').innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${disponibili} disp. su 200 (Reset: ${formattata})`;
+    } catch (error) {
+        console.error("Errore lettura contatore email:", error);
+    }
+}
+
 
         window.renderPendingSyncBox = function() {
             const box = document.getElementById('pendingSyncBox');
@@ -698,29 +739,53 @@
         }
 
         window.resendEmail = function(socioId) {
-            if (!EMAILJS_PUBLIC_KEY) return;
-            const socio = window.soci.find(s => s.id === socioId);
-            if (!socio || !socio.email) { showToast("Errore: indirizzo email mancante.", "error"); return; }
-            if (!confirm(`Vuoi inviare nuovamente l'email di avviso a ${socio.nome} ${socio.cognome}?`)) { return; }
+    if (!EMAILJS_PUBLIC_KEY) return;
+    const socio = window.soci.find(s => s.id === socioId);
+    if (!socio || !socio.email) { showToast("Errore: indirizzo email mancante.", "error"); return; }
+    if (!confirm(`Vuoi inviare nuovamente l'email di avviso a ${socio.nome} ${socio.cognome}?`)) { return; }
 
-            showToast("Invio email in corso...");
-            const templateParams = {
-                to_email: socio.email,
-                to_name: socio.nome + ' ' + socio.cognome,
-                data_scadenza: formatDateIT(socio.scadenzaCertificato)
-            };
+    showToast("Invio email in corso...");
+    const templateParams = {
+        to_email: socio.email,
+        to_name: socio.nome + ' ' + socio.cognome,
+        data_scadenza: formatDateIT(socio.scadenzaCertificato)
+    };
 
-            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
-                .then(function(response) {
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    if (isFirebaseConnected && db) {
-                        db.collection('soci').doc(socio.id).update({ dataInvioAvvisoCertificato: todayStr }).catch(err => console.error(err));
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+        .then(async function(response) { // <--- Aggiunto async qui
+            const todayStr = new Date().toISOString().split('T')[0];
+            if (isFirebaseConnected && db) {
+                try {
+                    // Aggiorna il socio
+                    await db.collection('soci').doc(socio.id).update({ dataInvioAvvisoCertificato: todayStr });
+                    
+                    // -- NUOVO: AUMENTA IL CONTATORE EMAIL AL RE-INVIO --
+                    const ciclo = getCicloId();
+                    const contatoreRef = db.collection('impostazioni').doc('email_' + ciclo);
+                    const contatoreSnap = await contatoreRef.get();
+                    
+                    let numeroAttuale = 0;
+                    if (contatoreSnap.exists && contatoreSnap.data().inviate) {
+                        numeroAttuale = contatoreSnap.data().inviate;
                     }
-                    showToast("Email inviata con successo!");
-                }, function(error) {
-                    showToast("Errore durante l'invio dell'email.", "error");
-                });
-        };
+                    
+                    await contatoreRef.set({
+                        inviate: numeroAttuale + 1
+                    }, { merge: true });
+                    
+                    aggiornaContatoreEmail(); // Aggiorna il numerino nel badge in tempo reale
+                    // ---------------------------------------------------
+                    
+                } catch (err) {
+                    console.error("Errore aggiornamento Firebase:", err);
+                }
+            }
+            showToast("Email inviata con successo!");
+        }, function(error) {
+            showToast("Errore durante l'invio dell'email.", "error");
+            console.error("Errore EmailJS:", error);
+        });
+};
 
         window.persistSocio = function(socioData) {
             if (db) { db.collection('soci').doc(socioData.id).set(socioData).catch(err => console.error(err)); } 
@@ -828,29 +893,25 @@
             document.getElementById('badge-alert-med-expired').innerText = medExpiredList.length;
             document.getElementById('badge-alert-med-expiring').innerText = medExpiringList.length;
 
-if (medExpiredList.length === 0) {
-                alertMedExpired.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato scaduto.</p>`;
-            } else {
-                medExpiredList.forEach(item => {
-                    alertMedExpired.innerHTML += `
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                            <div><p class="font-semibold text-slate-800">${item.socio.cognome} ${item.socio.nome}</p><p class="text-[11px] sm:text-xs text-slate-500">Scaduto il: ${formatDateIT(item.socio.scadenzaCertificato)}</p></div>
-                            <div class="flex items-center gap-1.5"><span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-rose-100 text-rose-700">${item.stat.label}</span>
-                            <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button></div>
-                        </div>`;
-                });
-            }
-
-            if (medExpiringList.length === 0) {
+if (medExpiringList.length === 0) {
                 alertMedExpiring.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato in scadenza nei prossimi 30 giorni.</p>`;
             } else {
                 medExpiringList.forEach(item => {
-                    const mailInviataIcon = item.socio.dataInvioAvvisoCertificato ? `<i class="fa-solid fa-envelope-circle-check text-emerald-500 ml-1" title="Email inviata"></i>` : ``;
+                    // QUI LA MODIFICA: Se c'è la data mostra la spunta verde, altrimenti mostra l'aeroplanino per l'invio manuale
+                    const mailInviataIcon = item.socio.dataInvioAvvisoCertificato 
+                        ? `<i class="fa-solid fa-envelope-circle-check text-emerald-500 ml-2" title="Email inviata"></i>` 
+                        : `<button onclick="forzaInvioManuale('${item.socio.id}')" class="ml-2 text-blue-500 hover:text-blue-700 transition-colors" title="Forza invio manuale"><i class="fa-solid fa-paper-plane text-sm"></i></button>`;
+                    
                     alertMedExpiring.innerHTML += `
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
-                            <div><p class="font-semibold text-slate-800">${item.socio.cognome} ${item.socio.nome} ${mailInviataIcon}</p><p class="text-[11px] sm:text-xs text-slate-500">Scadenza: ${formatDateIT(item.socio.scadenzaCertificato)}</p></div>
-                            <div class="flex items-center gap-1.5"><span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">${item.stat.label}</span>
-                            <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button></div>
+                            <div>
+                                <p class="font-semibold text-slate-800 flex items-center">${item.socio.cognome} ${item.socio.nome} ${mailInviataIcon}</p>
+                                <p class="text-[11px] sm:text-xs text-slate-500">Scadenza: ${formatDateIT(item.socio.scadenzaCertificato)}</p>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-amber-100 text-amber-700">${item.stat.label}</span>
+                                <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                            </div>
                         </div>`;
                 });
             }
@@ -1159,6 +1220,107 @@ if (medExpiredList.length === 0) {
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js').catch(err => console.error('Errore SW:', err)); });
         }
+
+// --- LOGICA CONTATORE EMAILJS ---
+function calcolaDataReset() {
+    const oggi = new Date();
+    // Imposta come data base il 28 del mese corrente
+    let giornoReset = new Date(oggi.getFullYear(), oggi.getMonth(), 28);
+    // Se oggi abbiamo già superato (o siamo nel) giorno 28, il reset scala al mese prossimo
+    if (oggi.getDate() >= 28) {
+        giornoReset.setMonth(giornoReset.getMonth() + 1);
+    }
+    return giornoReset;
+}
+
+function getCicloId() {
+    const reset = calcolaDataReset();
+    return `${reset.getFullYear()}_${String(reset.getMonth() + 1).padStart(2, '0')}`;
+}
+
+async function aggiornaContatoreEmail() {
+    try {
+        const ciclo = getCicloId(); // es: "2026_11"
+        const docRef = db.collection('impostazioni').doc('email_' + ciclo);
+        const docSnap = await docRef.get();
+        
+        let inviate = 0;
+        if (docSnap.exists) {
+            inviate = docSnap.data().inviate || 0;
+        }
+        
+        const disponibili = 200 - inviate;
+        const formattata = calcolaDataReset().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+        
+        document.getElementById('badgeEmail').innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${disponibili} disp. su 200 (Reset: ${formattata})`;
+    } catch (error) {
+        console.error("Errore lettura contatore email:", error);
+    }
+}
+// --------------------------------
+
+async function forzaInvioManuale(idSocio) {
+    // 1. Chiedi conferma per evitare click accidentali
+    if (!confirm("Vuoi inviare manualmente l'avviso di scadenza a questo socio?")) return;
+
+    try {
+        // 2. Recupera i dati del socio da Firestore
+        const docRef = db.collection('soci').doc(idSocio);
+        const docSnap = await docRef.get();
+        
+        if (!docSnap.exists) {
+            alert("Socio non trovato.");
+            return;
+        }
+        
+        const socio = docSnap.data();
+        
+        if (!socio.email) {
+            alert("Attenzione: questo socio non ha un indirizzo email registrato!");
+            return;
+        }
+
+        // 3. Prepara i parametri per EmailJS
+        const templateParams = {
+            to_email: socio.email,
+            to_name: socio.nome + ' ' + socio.cognome,
+            data_scadenza: formatDateIT(socio.scadenzaCertificato) // Usa la tua funzione di formattazione data
+        };
+
+        // 4. Invia la mail (Sostituisci con i tuoi ID di EmailJS)
+        await emailjs.send('service_t1rovq9', 'template_zw8by5a', templateParams, 'vHtINp_1fBRodY8Pp');
+
+        // 5. Aggiorna Firestore con la data di oggi per registrare l'avvenuto invio
+        const todayStr = new Date().toISOString().split('T')[0];
+        await docRef.update({ dataInvioAvvisoCertificato: todayStr });
+
+// -- NUOVO: AUMENTA IL CONTATORE EMAIL (METODO INFALLIBILE) --
+        const ciclo = getCicloId();
+        const contatoreRef = db.collection('impostazioni').doc('email_' + ciclo);
+        const contatoreSnap = await contatoreRef.get();
+        
+        let numeroAttuale = 0;
+        if (contatoreSnap.exists && contatoreSnap.data().inviate) {
+            numeroAttuale = contatoreSnap.data().inviate;
+        }
+        
+        await contatoreRef.set({
+            inviate: numeroAttuale + 1
+        }, { merge: true });
+        
+        aggiornaContatoreEmail(); // Aggiorna istantaneamente il badge a schermo
+        // -------------------------------------------------------------
+
+        alert("Email inviata con successo!");
+        
+        // 6. Ricarica la dashboard per far scomparire l'aeroplanino e mostrare la busta verde
+        renderDashboard(); // O il nome della tua funzione che ricarica i dati
+
+    } catch (error) {
+        console.error("Errore durante l'invio manuale:", error);
+        alert("Errore durante l'invio: " + error.text || error.message);
+    }
+}
 
         window.onload = function() { initFirebase(); };
     </script>
