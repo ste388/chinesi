@@ -1,5 +1,14 @@
 const admin = require('firebase-admin');
 
+function getCicloId() {
+    const oggi = new Date();
+    let reset = new Date(oggi.getFullYear(), oggi.getMonth(), 28);
+    if (oggi.getDate() >= 28) {
+        reset.setMonth(reset.getMonth() + 1);
+    }
+    return `${reset.getFullYear()}_${String(reset.getMonth() + 1).padStart(2, '0')}`;
+}
+
 // 1. Inizializza Firebase con il segreto di GitHub
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
@@ -73,7 +82,16 @@ async function run() {
             if (medStat.status === 'expiring' && medStat.days <= 30 && medStat.days >= 0) {
                 console.log(`Invio mail a: ${socio.cognome} ${socio.nome} (${socio.email})`);
                 await sendEmail(socio);
+                
+                // Aggiorna la data sul socio
                 await db.collection('soci').doc(socio.id).update({ dataInvioAvvisoCertificato: todayStr });
+                
+                // AUMENTA IL CONTATORE EMAIL SU FIREBASE
+                const ciclo = getCicloId();
+                await db.collection('impostazioni').doc('email_' + ciclo).set({
+                    inviate: admin.firestore.FieldValue.increment(1)
+                }, { merge: true });
+
                 count++;
             }
         }
