@@ -134,7 +134,7 @@
             </div>
         </div>
     </header>
-
+    
     <!-- Main Navigation Tabs -->
     <nav class="bg-white border-b border-slate-200 shrink-0 no-print overflow-x-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-4 sm:space-x-8">
@@ -290,14 +290,14 @@
             </div>
         </div>
 
-        <!-- SOCI / ANAGRAFICA VIEW -->
+<!-- SOCI / ANAGRAFICA VIEW -->
         <div id="view-soci" class="space-y-6 hidden">
             <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 flex flex-col md:flex-row gap-3 items-center justify-between no-print">
                 <div class="relative w-full md:w-80">
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </span>
-                    <input type="text" id="searchInput" oninput="filterSoci()" placeholder="Cerca socio attivo..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600">
+                    <input type="text" id="searchInput" oninput="filterSoci()" placeholder="Cerca socio attivo o n. tessera..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600">
                 </div>
                 
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
@@ -329,6 +329,7 @@
                                 <th class="py-4 px-4 sm:px-6 cursor-pointer hover:text-slate-800 transition" onclick="toggleSort()" title="Ordina per nome">
                                     Socio & Contatti <i id="sortIcon" class="fa-solid fa-arrow-down-a-z ml-1 text-tealmed-600"></i>
                                 </th>
+                                <th class="py-4 px-3 sm:px-4 text-center">Tessera</th>
                                 <th class="py-4 px-3 sm:px-4 text-center">Tessera Associativa</th>
                                 <th class="py-4 px-3 sm:px-4 text-center">Certificato Medico</th>
                                 <th class="py-4 px-3 sm:px-4 text-center">Abbonamento</th>
@@ -398,6 +399,13 @@
                 <input type="hidden" id="dataInvioAvvisoCertificato" value=""> 
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Numero Tessera</label>
+                        <input type="number" id="numeroTessera" placeholder="Es. 1042" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Nome *</label><input type="text" id="nome" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
                     <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Cognome *</label><input type="text" id="cognome" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
                 </div>
@@ -413,6 +421,23 @@
                 </div>
 
                 <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Tessera Associativa *</label><input type="date" id="scadenzaTessera" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Tipo Abbonamento</label>
+                        <select id="tipoAbbonamento" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                            <option value="">Seleziona...</option>
+                            <option value="uno">uno</option>
+                            <option value="due">due</option>
+                            <option value="tre">tre</option>
+                            <option value="quattro">quattro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Importo (€)</label>
+                        <input type="text" id="importo" placeholder="Es. € 50,00" onblur="formattaImporto(this)" onfocus="pulisciImporto(this)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1 text-amber-600"><i class="fa-solid fa-file-medical"></i> Scad. Certificato *</label><input type="date" id="scadenzaCertificato" required class="w-full px-3 py-2 bg-slate-50 border border-amber-300 rounded-xl text-sm"></div>
@@ -574,8 +599,8 @@
                 renderSociTable();
                 renderArchivioTable();
                 renderPendingSyncBox();
-             // checkScadenzeAndSendEmails();
-			 
+                // checkScadenzeAndSendEmails();
+                
                 aggiornaContatoreEmail();
 
             }, (error) => { 
@@ -587,41 +612,41 @@
             });
         }
 
-// --- LOGICA CONTATORE EMAILJS ---
-function calcolaDataReset() {
-    const oggi = new Date();
-    let giornoReset = new Date(oggi.getFullYear(), oggi.getMonth(), 28);
-    if (oggi.getDate() >= 28) {
-        giornoReset.setMonth(giornoReset.getMonth() + 1);
-    }
-    return giornoReset;
-}
-
-function getCicloId() {
-    const reset = calcolaDataReset();
-    return `${reset.getFullYear()}_${String(reset.getMonth() + 1).padStart(2, '0')}`;
-}
-
-async function aggiornaContatoreEmail() {
-    try {
-        const ciclo = getCicloId(); 
-        const docRef = db.collection('impostazioni').doc('email_' + ciclo);
-        const docSnap = await docRef.get();
-        
-        let inviate = 0;
-        if (docSnap.exists) {
-            inviate = docSnap.data().inviate || 0;
+        // --- LOGICA CONTATORE EMAILJS ---
+        function calcolaDataReset() {
+            const oggi = new Date();
+            let giornoReset = new Date(oggi.getFullYear(), oggi.getMonth(), 28);
+            if (oggi.getDate() >= 28) {
+                giornoReset.setMonth(giornoReset.getMonth() + 1);
+            }
+            return giornoReset;
         }
-        
-        const disponibili = 200 - inviate;
-        const formattata = calcolaDataReset().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
-        
-        document.getElementById('badgeEmail').innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${disponibili} disp. su 200 (Reset: ${formattata})`;
-    } catch (error) {
-        console.error("Errore lettura contatore email:", error);
-    }
-}
 
+        function getCicloId() {
+            const reset = calcolaDataReset();
+            return `${reset.getFullYear()}_${String(reset.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        async function aggiornaContatoreEmail() {
+            try {
+                const ciclo = getCicloId(); 
+                const docRef = db.collection('impostazioni').doc('email_' + ciclo);
+                const docSnap = await docRef.get();
+                
+                let inviate = 0;
+                if (docSnap.exists) {
+                    inviate = docSnap.data().inviate || 0;
+                }
+                
+                const disponibili = 200 - inviate;
+                const formattata = calcolaDataReset().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                
+                document.getElementById('badgeEmail').innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${disponibili} disp. su 200 (Reset: ${formattata})`;
+            } catch (error) {
+                console.error("Errore lettura contatore email:", error);
+            }
+        }
+        // --------------------------------
 
         window.renderPendingSyncBox = function() {
             const box = document.getElementById('pendingSyncBox');
@@ -739,53 +764,104 @@ async function aggiornaContatoreEmail() {
         }
 
         window.resendEmail = function(socioId) {
-    if (!EMAILJS_PUBLIC_KEY) return;
-    const socio = window.soci.find(s => s.id === socioId);
-    if (!socio || !socio.email) { showToast("Errore: indirizzo email mancante.", "error"); return; }
-    if (!confirm(`Vuoi inviare nuovamente l'email di avviso a ${socio.nome} ${socio.cognome}?`)) { return; }
+            if (!EMAILJS_PUBLIC_KEY) return;
+            const socio = window.soci.find(s => s.id === socioId);
+            if (!socio || !socio.email) { showToast("Errore: indirizzo email mancante.", "error"); return; }
+            if (!confirm(`Vuoi inviare nuovamente l'email di avviso a ${socio.nome} ${socio.cognome}?`)) { return; }
 
-    showToast("Invio email in corso...");
-    const templateParams = {
-        to_email: socio.email,
-        to_name: socio.nome + ' ' + socio.cognome,
-        data_scadenza: formatDateIT(socio.scadenzaCertificato)
-    };
+            showToast("Invio email in corso...");
+            const templateParams = {
+                to_email: socio.email,
+                to_name: socio.nome + ' ' + socio.cognome,
+                data_scadenza: formatDateIT(socio.scadenzaCertificato)
+            };
 
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
-        .then(async function(response) { // <--- Aggiunto async qui
-            const todayStr = new Date().toISOString().split('T')[0];
-            if (isFirebaseConnected && db) {
-                try {
-                    // Aggiorna il socio
-                    await db.collection('soci').doc(socio.id).update({ dataInvioAvvisoCertificato: todayStr });
-                    
-                    // -- NUOVO: AUMENTA IL CONTATORE EMAIL AL RE-INVIO --
-                    const ciclo = getCicloId();
-                    const contatoreRef = db.collection('impostazioni').doc('email_' + ciclo);
-                    const contatoreSnap = await contatoreRef.get();
-                    
-                    let numeroAttuale = 0;
-                    if (contatoreSnap.exists && contatoreSnap.data().inviate) {
-                        numeroAttuale = contatoreSnap.data().inviate;
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                .then(async function(response) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (isFirebaseConnected && db) {
+                        try {
+                            await db.collection('soci').doc(socio.id).update({ dataInvioAvvisoCertificato: todayStr });
+                            
+                            const ciclo = getCicloId();
+                            const contatoreRef = db.collection('impostazioni').doc('email_' + ciclo);
+                            const contatoreSnap = await contatoreRef.get();
+                            
+                            let numeroAttuale = 0;
+                            if (contatoreSnap.exists && contatoreSnap.data().inviate) {
+                                numeroAttuale = contatoreSnap.data().inviate;
+                            }
+                            
+                            await contatoreRef.set({
+                                inviate: numeroAttuale + 1
+                            }, { merge: true });
+                            
+                            aggiornaContatoreEmail();
+                            
+                        } catch (err) {
+                            console.error("Errore aggiornamento Firebase:", err);
+                        }
                     }
-                    
-                    await contatoreRef.set({
-                        inviate: numeroAttuale + 1
-                    }, { merge: true });
-                    
-                    aggiornaContatoreEmail(); // Aggiorna il numerino nel badge in tempo reale
-                    // ---------------------------------------------------
-                    
-                } catch (err) {
-                    console.error("Errore aggiornamento Firebase:", err);
+                    showToast("Email inviata con successo!");
+                }, function(error) {
+                    showToast("Errore durante l'invio dell'email.", "error");
+                    console.error("Errore EmailJS:", error);
+                });
+        };
+
+        async function forzaInvioManuale(idSocio) {
+            if (!confirm("Vuoi inviare manualmente l'avviso di scadenza a questo socio?")) return;
+
+            try {
+                const docRef = db.collection('soci').doc(idSocio);
+                const docSnap = await docRef.get();
+                
+                if (!docSnap.exists) {
+                    alert("Socio non trovato.");
+                    return;
                 }
+                
+                const socio = docSnap.data();
+                
+                if (!socio.email) {
+                    alert("Attenzione: questo socio non ha un indirizzo email registrato!");
+                    return;
+                }
+
+                const templateParams = {
+                    to_email: socio.email,
+                    to_name: socio.nome + ' ' + socio.cognome,
+                    data_scadenza: formatDateIT(socio.scadenzaCertificato)
+                };
+
+                await emailjs.send('service_t1rovq9', 'template_zw8by5a', templateParams, 'vHtINp_1fBRodY8Pp');
+
+                const todayStr = new Date().toISOString().split('T')[0];
+                await docRef.update({ dataInvioAvvisoCertificato: todayStr });
+
+                const ciclo = getCicloId();
+                const contatoreRef = db.collection('impostazioni').doc('email_' + ciclo);
+                const contatoreSnap = await contatoreRef.get();
+                
+                let numeroAttuale = 0;
+                if (contatoreSnap.exists && contatoreSnap.data().inviate) {
+                    numeroAttuale = contatoreSnap.data().inviate;
+                }
+                
+                await contatoreRef.set({
+                    inviate: numeroAttuale + 1
+                }, { merge: true });
+                
+                aggiornaContatoreEmail();
+
+                alert("Email inviata con successo!");
+                renderDashboard();
+
+            } catch (error) {
+                console.error("Errore durante l'invio manuale:", error);
+                alert("Errore durante l'invio: " + (error.text || error.message));
             }
-            showToast("Email inviata con successo!");
-        }, function(error) {
-            showToast("Errore durante l'invio dell'email.", "error");
-            console.error("Errore EmailJS:", error);
-        });
-};
+        }
 
         window.persistSocio = function(socioData) {
             if (db) { db.collection('soci').doc(socioData.id).set(socioData).catch(err => console.error(err)); } 
@@ -804,6 +880,25 @@ async function aggiornaContatoreEmail() {
             if (parts.length === 3) { return `${parts[2]}-${parts[1]}-${parts[0]}`; }
             return dateStr;
         };
+
+window.formattaImporto = function(input) {
+    if (!input.value) return;
+    // Pulisce tutto tranne numeri, punti e virgole
+    let val = input.value.toString().replace(/[^0-9.,]/g, '').replace(',', '.');
+    let num = parseFloat(val);
+    if (!isNaN(num)) {
+        input.value = '€ ' + num.toFixed(2).replace('.', ',');
+    } else {
+        input.value = '';
+    }
+};
+
+window.pulisciImporto = function(input) {
+    if (!input.value) return;
+    // Quando clicchi dentro per modificarlo, toglie "€ " e rimette il numero pulito
+    input.value = input.value.replace('€', '').trim();
+};
+
 
         window.switchTab = function(tabName) {
             const views = ['dashboard', 'soci', 'archivio'];
@@ -893,11 +988,23 @@ async function aggiornaContatoreEmail() {
             document.getElementById('badge-alert-med-expired').innerText = medExpiredList.length;
             document.getElementById('badge-alert-med-expiring').innerText = medExpiringList.length;
 
-if (medExpiringList.length === 0) {
+            if (medExpiredList.length === 0) {
+                alertMedExpired.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato scaduto.</p>`;
+            } else {
+                medExpiredList.forEach(item => {
+                    alertMedExpired.innerHTML += `
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs sm:text-sm">
+                            <div><p class="font-semibold text-slate-800">${item.socio.cognome} ${item.socio.nome}</p><p class="text-[11px] sm:text-xs text-slate-500">Scaduto il: ${formatDateIT(item.socio.scadenzaCertificato)}</p></div>
+                            <div class="flex items-center gap-1.5"><span class="text-[10px] sm:text-xs px-2 py-1 rounded-full font-medium bg-rose-100 text-rose-700">${item.stat.label}</span>
+                            <button onclick="openEditModal('${item.socio.id}')" title="Modifica socio" class="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-pen text-xs"></i></button></div>
+                        </div>`;
+                });
+            }
+
+            if (medExpiringList.length === 0) {
                 alertMedExpiring.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">Nessun certificato in scadenza nei prossimi 30 giorni.</p>`;
             } else {
                 medExpiringList.forEach(item => {
-                    // QUI LA MODIFICA: Se c'è la data mostra la spunta verde, altrimenti mostra l'aeroplanino per l'invio manuale
                     const mailInviataIcon = item.socio.dataInvioAvvisoCertificato 
                         ? `<i class="fa-solid fa-envelope-circle-check text-emerald-500 ml-2" title="Email inviata"></i>` 
                         : `<button onclick="forzaInvioManuale('${item.socio.id}')" class="ml-2 text-blue-500 hover:text-blue-700 transition-colors" title="Forza invio manuale"><i class="fa-solid fa-paper-plane text-sm"></i></button>`;
@@ -965,7 +1072,7 @@ if (medExpiringList.length === 0) {
             const filtered = window.soci.filter(s => {
                 if (isArchived(s)) return false; // ESCLUDE I SOCI ARCHIVIATI DALL'ANAGRAFICA
 
-                const fullName = `${s.nome} ${s.cognome}`.toLowerCase();
+                const fullName = `${s.nome} ${s.cognome} ${s.numeroTessera || ''}`.toLowerCase();
                 if (!fullName.includes(searchVal)) return false;
 
                 const cardStat = getDateStatus(s.scadenzaTessera);
@@ -998,9 +1105,14 @@ if (medExpiringList.length === 0) {
                     const medStat = getDateStatus(s.scadenzaCertificato);
                     const subStat = getDateStatus(s.scadenzaAbbonamento);
 
+					const numTesseraDisplay = (s.numeroTessera !== null && s.numeroTessera !== undefined && s.numeroTessera !== '') 
+						? `<span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-bold text-xs border border-slate-200">${s.numeroTessera}</span>` 
+						: `<span class="text-slate-400 text-xs">-</span>`;
+
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50 transition border-b border-slate-100">
                             <td class="py-3 px-4 sm:px-6"><div class="font-bold text-slate-900 text-sm whitespace-nowrap">${s.cognome} ${s.nome}</div></td>
+                            <td class="py-3 px-3 text-center whitespace-nowrap">${numTesseraDisplay}</td>
                             <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700">${cardStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaTessera)}</div></td>
                             <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${medStat.color}-50 text-${medStat.color}-700">${medStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaCertificato)}</div></td>
                             <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${subStat.color}-50 text-${subStat.color}-700">${subStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaAbbonamento)}</div></td>
@@ -1070,10 +1182,11 @@ if (medExpiringList.length === 0) {
             document.getElementById('socioModal').classList.remove('hidden');
         };
 
-        window.openEditModal = function(id) {
+       window.openEditModal = function(id) {
             const socio = window.soci.find(s => s.id === id);
             if (!socio) return;
             document.getElementById('socioId').value = socio.id;
+            document.getElementById('numeroTessera').value = socio.numeroTessera || '';
             document.getElementById('nome').value = socio.nome || '';
             document.getElementById('cognome').value = socio.cognome || '';
             document.getElementById('dataNascita').value = socio.dataNascita || '';
@@ -1081,6 +1194,12 @@ if (medExpiringList.length === 0) {
             document.getElementById('telefono').value = socio.telefono || '';
             document.getElementById('email').value = socio.email || '';
             document.getElementById('scadenzaTessera').value = socio.scadenzaTessera || '';
+            document.getElementById('tipoAbbonamento').value = socio.tipoAbbonamento || '';
+            
+            const importoEl = document.getElementById('importo');
+            importoEl.value = (socio.importo !== null && socio.importo !== undefined) ? socio.importo.toString() : '';
+            formattaImporto(importoEl);
+            
             document.getElementById('scadenzaCertificato').value = socio.scadenzaCertificato || '';
             document.getElementById('scadenzaAbbonamento').value = socio.scadenzaAbbonamento || '';
             document.getElementById('dataInvioAvvisoCertificato').value = socio.dataInvioAvvisoCertificato || '';
@@ -1095,6 +1214,10 @@ if (medExpiringList.length === 0) {
             event.preventDefault();
             const id = document.getElementById('socioId').value;
             const newScadenzaCertificato = document.getElementById('scadenzaCertificato').value;
+            const numeroTesseraVal = document.getElementById('numeroTessera').value;
+            
+            const rawImporto = document.getElementById('importo').value.replace('€', '').replace(',', '.').trim();
+            const importoNum = rawImporto ? parseFloat(rawImporto) : null;
             
             let avvisoData = document.getElementById('dataInvioAvvisoCertificato').value;
             if (id) {
@@ -1104,6 +1227,7 @@ if (medExpiringList.length === 0) {
 
             const socioData = {
                 id: id || 'socio-' + Date.now(),
+                numeroTessera: numeroTesseraVal ? Number(numeroTesseraVal) : null,
                 nome: document.getElementById('nome').value.trim(),
                 cognome: document.getElementById('cognome').value.trim(),
                 dataNascita: document.getElementById('dataNascita').value,
@@ -1111,6 +1235,8 @@ if (medExpiringList.length === 0) {
                 telefono: document.getElementById('telefono').value.trim(),
                 email: document.getElementById('email').value.trim(),
                 scadenzaTessera: document.getElementById('scadenzaTessera').value,
+                tipoAbbonamento: document.getElementById('tipoAbbonamento').value,
+                importo: !isNaN(importoNum) ? importoNum : null,
                 scadenzaCertificato: newScadenzaCertificato,
                 scadenzaAbbonamento: document.getElementById('scadenzaAbbonamento').value,
                 dataInvioAvvisoCertificato: avvisoData
@@ -1158,9 +1284,10 @@ if (medExpiringList.length === 0) {
         };
 
         window.exportCSV = function() {
-            let csvContent = "\uFEFFCognome;Nome;Data Nascita;Codice Fiscale;Telefono;Email;Scadenza Tessera;Scadenza Certificato;Scadenza Abbonamento\n";
+            let csvContent = "\uFEFFNumero Tessera;Cognome;Nome;Data Nascita;Codice Fiscale;Telefono;Email;Scadenza Tessera;Tipo Abbonamento;Importo;Scadenza Certificato;Scadenza Abbonamento\n";
             window.soci.forEach(s => {
                 const row = [
+                    `"${s.numeroTessera !== null && s.numeroTessera !== undefined ? s.numeroTessera : ''}"`,
                     `"${(s.cognome || '').replace(/"/g, '""')}"`,
                     `"${(s.nome || '').replace(/"/g, '""')}"`,
                     `"${formatDateIT(s.dataNascita) || ''}"`,
@@ -1168,6 +1295,8 @@ if (medExpiringList.length === 0) {
                     `"${s.telefono || ''}"`,
                     `"${s.email || ''}"`,
                     `"${formatDateIT(s.scadenzaTessera) || ''}"`,
+                    `"${s.tipoAbbonamento || ''}"`,
+                    `"${s.importo !== null && s.importo !== undefined ? s.importo : ''}"`,
                     `"${formatDateIT(s.scadenzaCertificato) || ''}"`,
                     `"${formatDateIT(s.scadenzaAbbonamento) || ''}"`
                 ];
@@ -1220,107 +1349,6 @@ if (medExpiringList.length === 0) {
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js').catch(err => console.error('Errore SW:', err)); });
         }
-
-// --- LOGICA CONTATORE EMAILJS ---
-function calcolaDataReset() {
-    const oggi = new Date();
-    // Imposta come data base il 28 del mese corrente
-    let giornoReset = new Date(oggi.getFullYear(), oggi.getMonth(), 28);
-    // Se oggi abbiamo già superato (o siamo nel) giorno 28, il reset scala al mese prossimo
-    if (oggi.getDate() >= 28) {
-        giornoReset.setMonth(giornoReset.getMonth() + 1);
-    }
-    return giornoReset;
-}
-
-function getCicloId() {
-    const reset = calcolaDataReset();
-    return `${reset.getFullYear()}_${String(reset.getMonth() + 1).padStart(2, '0')}`;
-}
-
-async function aggiornaContatoreEmail() {
-    try {
-        const ciclo = getCicloId(); // es: "2026_11"
-        const docRef = db.collection('impostazioni').doc('email_' + ciclo);
-        const docSnap = await docRef.get();
-        
-        let inviate = 0;
-        if (docSnap.exists) {
-            inviate = docSnap.data().inviate || 0;
-        }
-        
-        const disponibili = 200 - inviate;
-        const formattata = calcolaDataReset().toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
-        
-        document.getElementById('badgeEmail').innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${disponibili} disp. su 200 (Reset: ${formattata})`;
-    } catch (error) {
-        console.error("Errore lettura contatore email:", error);
-    }
-}
-// --------------------------------
-
-async function forzaInvioManuale(idSocio) {
-    // 1. Chiedi conferma per evitare click accidentali
-    if (!confirm("Vuoi inviare manualmente l'avviso di scadenza a questo socio?")) return;
-
-    try {
-        // 2. Recupera i dati del socio da Firestore
-        const docRef = db.collection('soci').doc(idSocio);
-        const docSnap = await docRef.get();
-        
-        if (!docSnap.exists) {
-            alert("Socio non trovato.");
-            return;
-        }
-        
-        const socio = docSnap.data();
-        
-        if (!socio.email) {
-            alert("Attenzione: questo socio non ha un indirizzo email registrato!");
-            return;
-        }
-
-        // 3. Prepara i parametri per EmailJS
-        const templateParams = {
-            to_email: socio.email,
-            to_name: socio.nome + ' ' + socio.cognome,
-            data_scadenza: formatDateIT(socio.scadenzaCertificato) // Usa la tua funzione di formattazione data
-        };
-
-        // 4. Invia la mail (Sostituisci con i tuoi ID di EmailJS)
-        await emailjs.send('service_t1rovq9', 'template_zw8by5a', templateParams, 'vHtINp_1fBRodY8Pp');
-
-        // 5. Aggiorna Firestore con la data di oggi per registrare l'avvenuto invio
-        const todayStr = new Date().toISOString().split('T')[0];
-        await docRef.update({ dataInvioAvvisoCertificato: todayStr });
-
-// -- NUOVO: AUMENTA IL CONTATORE EMAIL (METODO INFALLIBILE) --
-        const ciclo = getCicloId();
-        const contatoreRef = db.collection('impostazioni').doc('email_' + ciclo);
-        const contatoreSnap = await contatoreRef.get();
-        
-        let numeroAttuale = 0;
-        if (contatoreSnap.exists && contatoreSnap.data().inviate) {
-            numeroAttuale = contatoreSnap.data().inviate;
-        }
-        
-        await contatoreRef.set({
-            inviate: numeroAttuale + 1
-        }, { merge: true });
-        
-        aggiornaContatoreEmail(); // Aggiorna istantaneamente il badge a schermo
-        // -------------------------------------------------------------
-
-        alert("Email inviata con successo!");
-        
-        // 6. Ricarica la dashboard per far scomparire l'aeroplanino e mostrare la busta verde
-        renderDashboard(); // O il nome della tua funzione che ricarica i dati
-
-    } catch (error) {
-        console.error("Errore durante l'invio manuale:", error);
-        alert("Errore durante l'invio: " + error.text || error.message);
-    }
-}
 
         window.onload = function() { initFirebase(); };
     </script>
