@@ -420,8 +420,6 @@
                     <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1 text-medical-600"><i class="fa-solid fa-envelope"></i> Email (Per Avvisi)</label><input type="email" id="email" class="w-full px-3 py-2 bg-slate-50 border border-medical-300 rounded-xl text-sm"></div>
                 </div>
 
-                <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Tessera Associativa *</label><input type="date" id="scadenzaTessera" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Tipo Abbonamento</label>
@@ -433,15 +431,33 @@
                             <option value="quattro">quattro</option>
                         </select>
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Note Varie</label>
+                    <textarea id="noteVarie" rows="3" placeholder="Inserisci eventuali annotazioni, info utili, preferenze..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm resize-y"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Importo (€)</label>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Importo</label>
                         <input type="text" id="importo" placeholder="Es. € 50,00" onblur="formattaImporto(this)" onfocus="pulisciImporto(this)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Tessera Associativa *</label>
+                        <input type="date" id="scadenzaTessera" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1 text-amber-600"><i class="fa-solid fa-file-medical"></i> Scad. Certificato *</label><input type="date" id="scadenzaCertificato" required class="w-full px-3 py-2 bg-slate-50 border border-amber-300 rounded-xl text-sm"></div>
-                    <div><label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Abbonamento *</label><input type="date" id="scadenzaAbbonamento" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Abbonamento *</label>
+                        <input type="date" id="scadenzaAbbonamento" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1 text-amber-600"><i class="fa-solid fa-file-medical"></i> Scad. Certificato *</label>
+                        <input type="date" id="scadenzaCertificato" required class="w-full px-3 py-2 bg-slate-50 border border-amber-300 rounded-xl text-sm">
+                    </div>
                 </div>
 
                 <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
@@ -1193,15 +1209,16 @@ window.pulisciImporto = function(input) {
             document.getElementById('codiceFiscale').value = socio.codiceFiscale || '';
             document.getElementById('telefono').value = socio.telefono || '';
             document.getElementById('email').value = socio.email || '';
-            document.getElementById('scadenzaTessera').value = socio.scadenzaTessera || '';
             document.getElementById('tipoAbbonamento').value = socio.tipoAbbonamento || '';
+            document.getElementById('noteVarie').value = socio.noteVarie || '';
             
             const importoEl = document.getElementById('importo');
             importoEl.value = (socio.importo !== null && socio.importo !== undefined) ? socio.importo.toString() : '';
             formattaImporto(importoEl);
             
-            document.getElementById('scadenzaCertificato').value = socio.scadenzaCertificato || '';
+            document.getElementById('scadenzaTessera').value = socio.scadenzaTessera || '';
             document.getElementById('scadenzaAbbonamento').value = socio.scadenzaAbbonamento || '';
+            document.getElementById('scadenzaCertificato').value = socio.scadenzaCertificato || '';
             document.getElementById('dataInvioAvvisoCertificato').value = socio.dataInvioAvvisoCertificato || '';
 
             document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-user-pen text-tealmed-500"></i> Modifica Dati Socio`;
@@ -1234,11 +1251,12 @@ window.pulisciImporto = function(input) {
                 codiceFiscale: document.getElementById('codiceFiscale').value.toUpperCase(),
                 telefono: document.getElementById('telefono').value.trim(),
                 email: document.getElementById('email').value.trim(),
-                scadenzaTessera: document.getElementById('scadenzaTessera').value,
                 tipoAbbonamento: document.getElementById('tipoAbbonamento').value,
+                noteVarie: document.getElementById('noteVarie').value.trim(),
                 importo: !isNaN(importoNum) ? importoNum : null,
-                scadenzaCertificato: newScadenzaCertificato,
+                scadenzaTessera: document.getElementById('scadenzaTessera').value,
                 scadenzaAbbonamento: document.getElementById('scadenzaAbbonamento').value,
+                scadenzaCertificato: newScadenzaCertificato,
                 dataInvioAvvisoCertificato: avvisoData
             };
 
@@ -1284,7 +1302,7 @@ window.pulisciImporto = function(input) {
         };
 
         window.exportCSV = function() {
-            let csvContent = "\uFEFFNumero Tessera;Cognome;Nome;Data Nascita;Codice Fiscale;Telefono;Email;Scadenza Tessera;Tipo Abbonamento;Importo;Scadenza Certificato;Scadenza Abbonamento\n";
+            let csvContent = "\uFEFFNumero Tessera;Cognome;Nome;Data Nascita;Codice Fiscale;Telefono;Email;Tipo Abbonamento;Note Varie;Importo;Scadenza Tessera;Scadenza Abbonamento;Scadenza Certificato\n";
             window.soci.forEach(s => {
                 const row = [
                     `"${s.numeroTessera !== null && s.numeroTessera !== undefined ? s.numeroTessera : ''}"`,
@@ -1294,11 +1312,12 @@ window.pulisciImporto = function(input) {
                     `"${(s.codiceFiscale || '').toUpperCase()}"`,
                     `"${s.telefono || ''}"`,
                     `"${s.email || ''}"`,
-                    `"${formatDateIT(s.scadenzaTessera) || ''}"`,
                     `"${s.tipoAbbonamento || ''}"`,
+                    `"${(s.noteVarie || '').replace(/"/g, '""').replace(/(\r\n|\n|\r)/gm, ' ')}"`,
                     `"${s.importo !== null && s.importo !== undefined ? s.importo : ''}"`,
-                    `"${formatDateIT(s.scadenzaCertificato) || ''}"`,
-                    `"${formatDateIT(s.scadenzaAbbonamento) || ''}"`
+                    `"${formatDateIT(s.scadenzaTessera) || ''}"`,
+                    `"${formatDateIT(s.scadenzaAbbonamento) || ''}"`,
+                    `"${formatDateIT(s.scadenzaCertificato) || ''}"`
                 ];
                 csvContent += row.join(";") + "\n";
             });
