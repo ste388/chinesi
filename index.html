@@ -39,19 +39,94 @@
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
-    <style>
+<style>
         body { font-family: 'Inter', sans-serif; }
+        @page {
+            size: A4 landscape;
+            margin: 12mm 10mm;
+        }
+        @page single-socio-page {
+            size: A4 portrait;
+            margin: 14mm 14mm;
+        }
         @media print {
-            body { background: white !important; color: black !important; }
-            header, nav, .no-print, button, .dropdown-menu { display: none !important; }
-            #pendingSyncBox { display: none !important; }
-            #view-dashboard { display: none !important; }
-            .shadow-sm, .shadow-2xl, .border { box-shadow: none !important; border: none !important; }
-            table { width: 100% !important; border-collapse: collapse !important; font-size: 11px !important; }
-            th, td { border: 1px solid #cbd5e1 !important; padding: 6px 8px !important; }
+            html, body, main {
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                display: block !important;
+                background: white !important;
+                color: #0f172a !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            header, nav, .no-print, button, .dropdown-menu, #pendingSyncBox, #view-dashboard {
+                display: none !important;
+            }
+            .overflow-x-auto {
+                overflow: visible !important;
+            }
+            .shadow-sm, .shadow-2xl, .rounded-2xl {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 10.5px !important;
+                margin-top: 6px !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            thead {
+                display: table-header-group !important;
+            }
+            tbody tr {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                border-bottom: 1px solid #e2e8f0 !important;
+            }
+            tbody tr:nth-child(even) {
+                background-color: #f8fafc !important;
+            }
+            th {
+                background-color: #f1f5f9 !important;
+                color: #1e293b !important;
+                border: 1px solid #cbd5e1 !important;
+                padding: 6px 8px !important;
+                font-weight: 700 !important;
+            }
+            td {
+                border-left: 1px solid #e2e8f0 !important;
+                border-right: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                white-space: normal !important;
+                vertical-align: middle !important;
+            }
+
+            /* --- GESTIONE STAMPA SINGOLO SOCIO --- */
+            #singleSocioPrintArea {
+                display: none !important;
+            }
+            body.printing-single-socio main,
+            body.printing-single-socio #socioModal,
+            body.printing-single-socio #corsiModal,
+            body.printing-single-socio #view-soci,
+            body.printing-single-socio #view-archivio {
+                display: none !important;
+            }
+            body.printing-single-socio #singleSocioPrintArea {
+                display: block !important;
+                page: single-socio-page;
+                width: 100% !important;
+            }
         }
     </style>
+	
 </head>
+
 <body class="h-full flex flex-col text-slate-800">
 
     <!-- AUTHENTICATION SCREEN -->
@@ -297,7 +372,7 @@
                     <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </span>
-                    <input type="text" id="searchInput" oninput="filterSoci()" placeholder="Cerca socio attivo o n. tessera..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600">
+                    <input type="text" id="searchInput" oninput="filterSoci()" placeholder="Cerca socio, tessera o abbonamento..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600">
                 </div>
                 
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
@@ -316,24 +391,49 @@
                 </div>
             </div>
 
-            <div class="hidden print:block mb-4 text-center">
-                <h2 class="text-2xl font-bold">Chinesi Center - Report Elenco Soci Attivi</h2>
-                <p class="text-xs text-slate-600">Generato il <span id="printDate"></span></p>
+<div class="hidden print:flex items-center justify-between pb-3 mb-4 border-b-2 border-slate-800">
+                <!-- Logo + Nome Centro a sinistra -->
+                <div class="flex items-center gap-3">
+                    <!-- Se hai un file immagine logo.png, puoi sostituire questo <svg> con: <img src="logo.png" class="h-11 w-auto"> -->
+                    <div class="w-11 h-11 rounded-xl bg-teal-600 flex items-center justify-center shrink-0">
+                        <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                            <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-lg font-extrabold tracking-tight text-slate-900 leading-none">CHINESI CENTER</div>
+                        <div class="text-[11px] font-medium text-teal-700 mt-1">Anagrafica Soci &amp; Monitoraggio Scadenze</div>
+                    </div>
+                </div>
+
+                <!-- Titolo Report, Filtri e Data a destra -->
+                <div class="text-right">
+                    <h2 id="printTitle" class="text-base font-bold text-slate-900">Report Elenco Soci Attivi</h2>
+                    <div id="printFilters" class="text-[11px] font-semibold text-slate-700 mt-0.5"></div>
+                    <div class="text-[10px] text-slate-500 mt-0.5">Generato il <span id="printDate"></span></div>
+                </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+           <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
-                                <th class="py-4 px-4 sm:px-6 cursor-pointer hover:text-slate-800 transition" onclick="toggleSort()" title="Ordina per nome">
-                                    Socio & Contatti <i id="sortIcon" class="fa-solid fa-arrow-down-a-z ml-1 text-tealmed-600"></i>
+                                <th rowspan="2" class="py-3 px-4 sm:px-6 cursor-pointer hover:text-slate-800 transition align-middle" onclick="toggleSort()" title="Ordina per nome">
+                                    Socio & Contatti <i id="sortIcon" class="fa-solid fa-arrow-down-a-z ml-1 text-tealmed-600 no-print"></i>
                                 </th>
-                                <th class="py-4 px-3 sm:px-4 text-center">Tessera</th>
-                                <th class="py-4 px-3 sm:px-4 text-center">Tessera Associativa</th>
-                                <th class="py-4 px-3 sm:px-4 text-center">Certificato Medico</th>
-                                <th class="py-4 px-3 sm:px-4 text-center">Abbonamento</th>
-                                <th class="py-4 px-4 sm:px-6 text-right no-print">Azioni Rapide</th>
+                                <th rowspan="2" class="py-3 px-3 sm:px-4 text-center align-middle">Tessera</th>
+                                <th rowspan="2" class="py-3 px-3 sm:px-4 text-center align-middle">Tessera Associativa</th>
+                                <th rowspan="2" class="py-3 px-3 sm:px-4 text-center align-middle">Certificato Medico</th>
+                                <th colspan="2" class="pt-2.5 pb-1 px-3 text-center bg-medical-50/70 text-medical-800 border-l border-r border-medical-200/70 tracking-wider">
+                                    Abbonamento
+                                </th>
+                                <th rowspan="2" class="py-3 px-4 sm:px-6 text-right no-print align-middle">Azioni Rapide</th>
+                            </tr>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-medical-700 uppercase">
+                                <th class="pt-0.5 pb-2 px-3 text-center bg-medical-50/70 border-l border-medical-200/70">Tipo / Corso</th>
+                                <th class="pt-0.5 pb-2 px-3 text-center bg-medical-50/70 border-r border-medical-200/70">Scadenza</th>
                             </tr>
                         </thead>
                         <tbody id="sociTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
@@ -423,13 +523,18 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Tipo Abbonamento</label>
-                        <select id="tipoAbbonamento" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
-                            <option value="">Seleziona...</option>
-                            <option value="uno">uno</option>
-                            <option value="due">due</option>
-                            <option value="tre">tre</option>
-                            <option value="quattro">quattro</option>
-                        </select>
+                        <div class="flex items-center gap-2">
+                            <select id="tipoAbbonamento" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                                <option value="">Seleziona...</option>
+                            </select>
+                            <button type="button" onclick="openCorsiModal()" title="Gestisci elenco corsi" class="px-3 py-2 bg-slate-100 hover:bg-medical-50 text-slate-700 hover:text-medical-700 border border-slate-200 hover:border-medical-300 rounded-xl text-sm transition shrink-0">
+                                <i class="fa-solid fa-gear"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Abbonamento *</label>
+                        <input type="date" id="scadenzaAbbonamento" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
                     </div>
                 </div>
 
@@ -440,7 +545,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Importo</label>
+                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Importo (€)</label>
                         <input type="text" id="importo" placeholder="Es. € 50,00" onblur="formattaImporto(this)" onfocus="pulisciImporto(this)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
                     </div>
                     <div>
@@ -451,18 +556,19 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Scadenza Abbonamento *</label>
-                        <input type="date" id="scadenzaAbbonamento" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
-                    </div>
-                    <div>
                         <label class="block text-xs font-semibold uppercase text-slate-600 mb-1 text-amber-600"><i class="fa-solid fa-file-medical"></i> Scad. Certificato *</label>
                         <input type="date" id="scadenzaCertificato" required class="w-full px-3 py-2 bg-slate-50 border border-amber-300 rounded-xl text-sm">
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Annulla</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-medical-600 hover:bg-medical-700 text-white text-sm font-medium transition shadow-sm">Salva Socio</button>
+<div class="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                    <button type="button" onclick="printSingleSocio()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium transition flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-print"></i> <span>Stampa Scheda</span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition">Annulla</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-medical-600 hover:bg-medical-700 text-white text-sm font-medium transition shadow-sm">Salva Socio</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -503,6 +609,41 @@
             </form>
         </div>
     </div>
+
+<!-- MODAL: GESTIONE CORSI & ABBONAMENTI -->
+    <div id="corsiModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 max-h-[85vh] flex flex-col">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                <h3 class="text-base sm:text-lg font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-tealmed-500"></i> Gestione Corsi & Abbonamenti
+                </h3>
+                <button type="button" onclick="closeCorsiModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Barra aggiunta nuovo corso -->
+            <div class="p-4 sm:px-6 bg-slate-50 border-b border-slate-200 shrink-0">
+                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1.5">Aggiungi Nuovo Corso / Abbonamento</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="nuovoCorsoInput" placeholder="Es. Pilates avanzato..." 
+                           onkeydown="if(event.key==='Enter'){event.preventDefault(); aggiungiCorso();}"
+                           class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-medical-600">
+                    <button type="button" onclick="aggiungiCorso()" class="px-4 py-2 rounded-xl bg-tealmed-600 hover:bg-tealmed-700 text-white text-sm font-medium transition shrink-0 flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> Aggiungi
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lista corsi -->
+            <div id="listaCorsiContainer" class="p-4 sm:px-6 overflow-y-auto space-y-2 flex-1"></div>
+
+            <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
+                <button type="button" onclick="closeCorsiModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium transition">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- TOAST NOTIFICATION -->
     <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
@@ -618,6 +759,7 @@
                 // checkScadenzeAndSendEmails();
                 
                 aggiornaContatoreEmail();
+				setupCorsiListener();
 
             }, (error) => { 
                 console.error("Firestore error:", error); 
@@ -662,6 +804,212 @@
                 console.error("Errore lettura contatore email:", error);
             }
         }
+		
+		// --- GESTIONE DINAMICA CORSI & ABBONAMENTI ---
+        const DEFAULT_CORSI = [
+            "Gold",
+            "Silver",
+            "Tessera 10 ingressi",
+            "Pilates mattina",
+            "Pilates sera 1° turno",
+            "Pilates sera 2° turno",
+            "Pilates sera 3° turno",
+            "Ginnastica dolce",
+            "Fast Workout",
+            "Posture e Tone",
+            "Cross Training",
+            "Balli di gruppo base",
+            "Balli di gruppo avanzato",
+            "Boogie Woogie",
+            "Open",
+            "Spinning",
+            "Yoga",
+            "Vario 1",
+            "Vario 2"
+        ];
+
+        window.corsiList = [...DEFAULT_CORSI];
+        let corsiListenerActive = false;
+        let editingCorsoIndex = null;
+
+        function setupCorsiListener() {
+            if (corsiListenerActive || !db) return;
+            corsiListenerActive = true;
+
+            db.collection('impostazioni').doc('corsi_abbonamenti').onSnapshot((docSnap) => {
+                if (docSnap.exists && Array.isArray(docSnap.data().lista)) {
+                    window.corsiList = docSnap.data().lista;
+                } else {
+                    window.corsiList = [...DEFAULT_CORSI];
+                    db.collection('impostazioni').doc('corsi_abbonamenti').set({ lista: window.corsiList }).catch(console.error);
+                }
+                renderTipoAbbonamentoSelect();
+                if (!document.getElementById('corsiModal').classList.contains('hidden')) {
+                    renderListaCorsiModal();
+                }
+            }, (err) => {
+                console.error("Errore caricamento corsi:", err);
+                renderTipoAbbonamentoSelect();
+            });
+        }
+
+        window.renderTipoAbbonamentoSelect = function(forceValue = null) {
+            const select = document.getElementById('tipoAbbonamento');
+            if (!select) return;
+            const currentVal = forceValue !== null ? forceValue : select.value;
+
+            select.innerHTML = `<option value="">Seleziona...</option>`;
+            window.corsiList.forEach(corso => {
+                const opt = document.createElement('option');
+                opt.value = corso;
+                opt.textContent = corso;
+                select.appendChild(opt);
+            });
+
+            // Se il socio ha salvato un vecchio corso non più in lista, lo mantiene selezionato
+            if (currentVal && !window.corsiList.includes(currentVal)) {
+                const extraOpt = document.createElement('option');
+                extraOpt.value = currentVal;
+                extraOpt.textContent = currentVal;
+                select.appendChild(extraOpt);
+            }
+            select.value = currentVal || "";
+        };
+
+        async function salvaListaCorsiFirestore(nuovaLista) {
+            window.corsiList = nuovaLista;
+            renderTipoAbbonamentoSelect();
+            renderListaCorsiModal();
+            if (db) {
+                try {
+                    await db.collection('impostazioni').doc('corsi_abbonamenti').set({ lista: nuovaLista });
+                } catch (err) {
+                    console.error("Errore salvataggio corsi:", err);
+                    showToast("Errore salvataggio su cloud.", "error");
+                }
+            }
+        }
+
+        window.openCorsiModal = function() {
+            editingCorsoIndex = null;
+            document.getElementById('nuovoCorsoInput').value = '';
+            renderListaCorsiModal();
+            document.getElementById('corsiModal').classList.remove('hidden');
+        };
+
+        window.closeCorsiModal = function() {
+            editingCorsoIndex = null;
+            document.getElementById('corsiModal').classList.add('hidden');
+        };
+
+        window.renderListaCorsiModal = function() {
+            const container = document.getElementById('listaCorsiContainer');
+            if (!container) return;
+
+            if (window.corsiList.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Nessun corso inserito.</p>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            window.corsiList.forEach((corso, index) => {
+                if (editingCorsoIndex === index) {
+                    const safeVal = corso.replace(/"/g, '&quot;');
+                    container.innerHTML += `
+                        <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-medical-50 border border-medical-300">
+                            <input type="text" id="editCorsoInput_${index}" value="${safeVal}"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault(); salvaModificaCorso(${index});} else if(event.key==='Escape'){annullaModificaCorso();}"
+                                   class="flex-1 px-3 py-1.5 bg-white border border-medical-300 rounded-lg text-sm focus:outline-none">
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button type="button" onclick="salvaModificaCorso(${index})" title="Conferma" class="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs transition">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button type="button" onclick="annullaModificaCorso()" title="Annulla" class="p-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs transition">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>`;
+                } else {
+                    container.innerHTML += `
+                        <div class="flex items-center justify-between gap-2 p-2.5 px-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition">
+                            <span class="text-sm font-medium text-slate-800">${corso}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button type="button" onclick="avviaModificaCorso(${index})" title="Modifica" class="p-1.5 px-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-medical-700 hover:border-medical-300 text-xs transition">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button type="button" onclick="eliminaCorso(${index})" title="Elimina" class="p-1.5 px-2 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-100 text-xs transition">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>`;
+                }
+            });
+        };
+
+        window.aggiungiCorso = function() {
+            const input = document.getElementById('nuovoCorsoInput');
+            const nome = input.value.trim();
+            if (!nome) return;
+
+            if (window.corsiList.some(c => c.toLowerCase() === nome.toLowerCase())) {
+                showToast("Questo corso è già presente nella lista.", "error");
+                return;
+            }
+
+            const nuovaLista = [...window.corsiList, nome];
+            input.value = '';
+            salvaListaCorsiFirestore(nuovaLista);
+            showToast("Corso aggiunto!");
+        };
+
+        window.avviaModificaCorso = function(index) {
+            editingCorsoIndex = index;
+            renderListaCorsiModal();
+            const inp = document.getElementById(`editCorsoInput_${index}`);
+            if (inp) { inp.focus(); inp.select(); }
+        };
+
+        window.annullaModificaCorso = function() {
+            editingCorsoIndex = null;
+            renderListaCorsiModal();
+        };
+
+        window.salvaModificaCorso = function(index) {
+            const inp = document.getElementById(`editCorsoInput_${index}`);
+            if (!inp) return;
+            const nuovoNome = inp.value.trim();
+            if (!nuovoNome) return;
+
+            if (window.corsiList.some((c, i) => i !== index && c.toLowerCase() === nuovoNome.toLowerCase())) {
+                showToast("Esiste già un corso con questo nome.", "error");
+                return;
+            }
+
+            const select = document.getElementById('tipoAbbonamento');
+            const eraSelezionato = select && select.value === window.corsiList[index];
+
+            const nuovaLista = [...window.corsiList];
+            nuovaLista[index] = nuovoNome;
+            editingCorsoIndex = null;
+            salvaListaCorsiFirestore(nuovaLista);
+
+            if (eraSelezionato && select) {
+                select.value = nuovoNome;
+            }
+            showToast("Corso modificato!");
+        };
+
+        window.eliminaCorso = function(index) {
+            const nomeCorso = window.corsiList[index];
+            if (!confirm(`Vuoi eliminare "${nomeCorso}" dall'elenco?`)) return;
+
+            const nuovaLista = window.corsiList.filter((_, i) => i !== index);
+            editingCorsoIndex = null;
+            salvaListaCorsiFirestore(nuovaLista);
+            showToast("Corso eliminato.");
+        };
+        // ---------------------------------------------
+		
         // --------------------------------
 
         window.renderPendingSyncBox = function() {
@@ -1079,7 +1427,7 @@ window.pulisciImporto = function(input) {
         };
 
         window.renderSociTable = function() {
-            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
             const filterStatus = document.getElementById('filterStatus').value;
             const tbody = document.getElementById('sociTableBody');
             const emptyState = document.getElementById('emptyState');
@@ -1088,8 +1436,8 @@ window.pulisciImporto = function(input) {
             const filtered = window.soci.filter(s => {
                 if (isArchived(s)) return false; // ESCLUDE I SOCI ARCHIVIATI DALL'ANAGRAFICA
 
-                const fullName = `${s.nome} ${s.cognome} ${s.numeroTessera || ''}`.toLowerCase();
-                if (!fullName.includes(searchVal)) return false;
+                const searchableText = `${s.nome} ${s.cognome} ${s.cognome} ${s.nome} ${s.numeroTessera || ''} ${s.tipoAbbonamento || ''}`.toLowerCase();
+                if (!searchableText.includes(searchVal)) return false;
 
                 const cardStat = getDateStatus(s.scadenzaTessera);
                 const medStat = getDateStatus(s.scadenzaCertificato);
@@ -1121,25 +1469,30 @@ window.pulisciImporto = function(input) {
                     const medStat = getDateStatus(s.scadenzaCertificato);
                     const subStat = getDateStatus(s.scadenzaAbbonamento);
 
-					const numTesseraDisplay = (s.numeroTessera !== null && s.numeroTessera !== undefined && s.numeroTessera !== '') 
-						? `<span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-bold text-xs border border-slate-200">${s.numeroTessera}</span>` 
-						: `<span class="text-slate-400 text-xs">-</span>`;
+                    const numTesseraDisplay = (s.numeroTessera !== null && s.numeroTessera !== undefined && s.numeroTessera !== '') 
+                        ? `<span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-bold text-xs border border-slate-200">${s.numeroTessera}</span>` 
+                        : `<span class="text-slate-400 text-xs">-</span>`;
 
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                            <td class="py-3 px-4 sm:px-6"><div class="font-bold text-slate-900 text-sm whitespace-nowrap">${s.cognome} ${s.nome}</div></td>
-                            <td class="py-3 px-3 text-center whitespace-nowrap">${numTesseraDisplay}</td>
-                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700">${cardStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaTessera)}</div></td>
-                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${medStat.color}-50 text-${medStat.color}-700">${medStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaCertificato)}</div></td>
-                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${subStat.color}-50 text-${subStat.color}-700">${subStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaAbbonamento)}</div></td>
-                            <td class="py-3 px-4 text-right whitespace-nowrap">
-                                <button onclick="openEditModal('${s.id}')" title="Modifica" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition"><i class="fa-solid fa-pen text-xs"></i></button>
-                                <button onclick="deleteSocio('${s.id}')" title="Elimina" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition ml-1"><i class="fa-solid fa-trash text-xs"></i></button>
-                            </td>
-                        </tr>`;
-                });
-            }
-        };
+                    const tipoAbbDisplay = s.tipoAbbonamento 
+                        ? `<span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-medical-50 text-medical-800 font-semibold text-xs border border-medical-200/80">${s.tipoAbbonamento}</span>` 
+                        : `<span class="text-slate-400 text-xs">-</span>`;
+
+					tbody.innerHTML += `
+											<tr class="hover:bg-slate-50 transition border-b border-slate-100">
+												<td class="py-3 px-4 sm:px-6"><div class="font-bold text-slate-900 text-sm whitespace-nowrap">${s.cognome} ${s.nome}</div></td>
+												<td class="py-3 px-3 text-center whitespace-nowrap">${numTesseraDisplay}</td>
+												<td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700">${cardStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaTessera)}</div></td>
+												<td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${medStat.color}-50 text-${medStat.color}-700">${medStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaCertificato)}</div></td>
+												<td class="py-3 px-3 text-center whitespace-nowrap bg-medical-50/25 border-l border-medical-100">${tipoAbbDisplay}</td>
+												<td class="py-3 px-3 text-center whitespace-nowrap bg-medical-50/25 border-r border-medical-100"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${subStat.color}-50 text-${subStat.color}-700">${subStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaAbbonamento)}</div></td>
+												<td class="py-3 px-4 text-right whitespace-nowrap no-print">
+													<button onclick="openEditModal('${s.id}')" title="Modifica" class="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition"><i class="fa-solid fa-pen text-xs"></i></button>
+													<button onclick="deleteSocio('${s.id}')" title="Elimina" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition ml-1"><i class="fa-solid fa-trash text-xs"></i></button>
+												</td>
+											</tr>`;
+									});
+								}
+							};
 
         window.renderArchivioTable = function() {
             const searchVal = document.getElementById('searchArchivioInput')?.value.toLowerCase() || '';
@@ -1209,7 +1562,7 @@ window.pulisciImporto = function(input) {
             document.getElementById('codiceFiscale').value = socio.codiceFiscale || '';
             document.getElementById('telefono').value = socio.telefono || '';
             document.getElementById('email').value = socio.email || '';
-            document.getElementById('tipoAbbonamento').value = socio.tipoAbbonamento || '';
+            renderTipoAbbonamentoSelect(socio.tipoAbbonamento || '');
             document.getElementById('noteVarie').value = socio.noteVarie || '';
             
             const importoEl = document.getElementById('importo');
@@ -1295,11 +1648,205 @@ window.pulisciImporto = function(input) {
             if (menu && !menu.contains(e.target)) { menu.classList.add('hidden'); }
         });
 
-        window.printReport = function() {
+window.printReport = function() {
+            const viewSoci = document.getElementById('view-soci');
+            const viewArchivio = document.getElementById('view-archivio');
+            
+            if (viewSoci.classList.contains('hidden') && viewArchivio.classList.contains('hidden')) {
+                switchTab('soci');
+            }
+
+            const filterSelect = document.getElementById('filterStatus');
+            const searchInput = document.getElementById('searchInput');
+            const printTitleEl = document.getElementById('printTitle');
+            const printFiltersEl = document.getElementById('printFilters');
             const printDateEl = document.getElementById('printDate');
-            if (printDateEl) printDateEl.innerText = new Date().toLocaleDateString('it-IT');
-            window.print();
+
+            const filterVal = filterSelect ? filterSelect.value : 'all';
+            const filterText = filterSelect ? filterSelect.options[filterSelect.selectedIndex].text : 'Tutti gli stati';
+            const searchText = searchInput ? searchInput.value.trim() : '';
+
+            if (printTitleEl) {
+                printTitleEl.innerText = (filterVal === 'all') 
+                    ? 'Report Elenco Soci Attivi' 
+                    : `Report: ${filterText}`;
+            }
+
+            if (printFiltersEl) {
+                let badges = `<span class="inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-800">Stato: ${filterText}</span>`;
+                if (searchText) {
+                    badges += ` <span class="inline-block px-2 py-0.5 rounded bg-teal-50 border border-teal-200 text-teal-800 ml-1">Ricerca: "${searchText}"</span>`;
+                }
+                printFiltersEl.innerHTML = badges;
+            }
+
+            const rowsCount = document.querySelectorAll('#sociTableBody tr').length;
+            const now = new Date();
+            const ora = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            if (printDateEl) {
+                printDateEl.innerText = `${now.toLocaleDateString('it-IT')} alle ${ora}  •  Totale soci in elenco: ${rowsCount}`;
+            }
+
+            setTimeout(() => {
+                window.print();
+            }, 100);
         };
+		
+		window.printSingleSocio = function() {
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                return el ? el.value.trim() : '';
+            };
+
+            const nome = getVal('nome');
+            const cognome = getVal('cognome');
+
+            if (!nome && !cognome) {
+                showToast("Inserisci almeno nome e cognome prima di stampare.", "error");
+                return;
+            }
+
+            const numeroTessera = getVal('numeroTessera');
+            const dataNascita = getVal('dataNascita');
+            const codiceFiscale = getVal('codiceFiscale').toUpperCase();
+            const telefono = getVal('telefono');
+            const email = getVal('email');
+            const tipoAbbonamento = getVal('tipoAbbonamento');
+            const scadenzaAbbonamento = getVal('scadenzaAbbonamento');
+            const noteVarie = getVal('noteVarie');
+            const importo = getVal('importo');
+            const scadenzaTessera = getVal('scadenzaTessera');
+            const scadenzaCertificato = getVal('scadenzaCertificato');
+
+            const cardStat = scadenzaTessera ? getDateStatus(scadenzaTessera) : { label: 'Non inserita', color: 'slate' };
+            const medStat = scadenzaCertificato ? getDateStatus(scadenzaCertificato) : { label: 'Non inserita', color: 'slate' };
+            const subStat = scadenzaAbbonamento ? getDateStatus(scadenzaAbbonamento) : { label: 'Non inserita', color: 'slate' };
+
+            const now = new Date();
+            const dataStampa = `${now.toLocaleDateString('it-IT')} alle ${now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`;
+
+            let printArea = document.getElementById('singleSocioPrintArea');
+            if (!printArea) {
+                printArea = document.createElement('div');
+                printArea.id = 'singleSocioPrintArea';
+                printArea.className = 'hidden';
+                document.body.appendChild(printArea);
+            }
+
+            printArea.innerHTML = `
+                <!-- INTESTAZIONE CON LOGO -->
+                <div class="flex items-center justify-between pb-4 mb-6 border-b-2 border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-teal-600 flex items-center justify-center shrink-0">
+                            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                                <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="text-xl font-extrabold tracking-tight text-slate-900 leading-none">CHINESI CENTER</div>
+                            <div class="text-xs font-medium text-teal-700 mt-1">Scheda Anagrafica &amp; Situazione Iscritto</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-base font-bold text-slate-900">${cognome} ${nome}</div>
+                        <div class="mt-0.5">
+                            ${numeroTessera 
+                                ? `<span class="inline-block px-2 py-0.5 rounded bg-slate-100 border border-slate-300 text-xs font-bold text-slate-800">Tessera N° ${numeroTessera}</span>` 
+                                : `<span class="text-xs text-slate-500">Nessun numero tessera</span>`}
+                        </div>
+                        <div class="text-[10px] text-slate-500 mt-1">Stampato il ${dataStampa}</div>
+                    </div>
+                </div>
+
+                <!-- SEZIONE 1: DATI ANAGRAFICI E CONTATTI -->
+                <div class="mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">1. Dati Anagrafici &amp; Recapiti</h3>
+                    <table class="w-full text-left border-collapse">
+                        <tbody>
+                            <tr>
+                                <th class="w-1/4 bg-slate-50 text-xs uppercase text-slate-600">Cognome e Nome</th>
+                                <td class="w-1/4 font-bold text-slate-900 text-sm">${cognome} ${nome}</td>
+                                <th class="w-1/4 bg-slate-50 text-xs uppercase text-slate-600">Numero Tessera</th>
+                                <td class="w-1/4 font-bold text-slate-900 text-sm">${numeroTessera || '-'}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-slate-50 text-xs uppercase text-slate-600">Data di Nascita</th>
+                                <td class="text-slate-800 text-xs">${dataNascita ? formatDateIT(dataNascita) : '-'}</td>
+                                <th class="bg-slate-50 text-xs uppercase text-slate-600">Codice Fiscale</th>
+                                <td class="font-mono text-slate-800 text-xs">${codiceFiscale || '-'}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-slate-50 text-xs uppercase text-slate-600">Telefono</th>
+                                <td class="text-slate-800 text-xs">${telefono || '-'}</td>
+                                <th class="bg-slate-50 text-xs uppercase text-slate-600">Email (Per Avvisi)</th>
+                                <td class="text-slate-800 text-xs">${email || '-'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- SEZIONE 2: ABBONAMENTO E SCADENZE -->
+                <div class="mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">2. Situazione Abbonamento &amp; Scadenze</h3>
+                    <table class="w-full text-left border-collapse">
+                        <tbody>
+                            <tr>
+                                <th class="w-1/4 bg-medical-50/70 text-xs uppercase text-medical-800">Tipo Abbonamento / Corso</th>
+                                <td class="w-1/4 font-bold text-slate-900 text-xs">${tipoAbbonamento || '-'}</td>
+                                <th class="w-1/4 bg-medical-50/70 text-xs uppercase text-medical-800">Importo Versato</th>
+                                <td class="w-1/4 font-bold text-slate-900 text-xs">${importo || '-'}</td>
+                            </tr>
+                            <tr>
+                                <th class="bg-slate-50 text-xs uppercase text-slate-600">Scadenza Abbonamento</th>
+                                <td class="text-xs">
+                                    <span class="font-bold text-slate-900">${scadenzaAbbonamento ? formatDateIT(scadenzaAbbonamento) : '-'}</span>
+                                    <span class="ml-1.5 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-${subStat.color}-50 text-${subStat.color}-700 border border-${subStat.color}-200">${subStat.label}</span>
+                                </td>
+                                <th class="bg-slate-50 text-xs uppercase text-slate-600">Scadenza Tessera Associativa</th>
+                                <td class="text-xs">
+                                    <span class="font-bold text-slate-900">${scadenzaTessera ? formatDateIT(scadenzaTessera) : '-'}</span>
+                                    <span class="ml-1.5 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700 border border-${cardStat.color}-200">${cardStat.label}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="bg-slate-50 text-xs uppercase text-slate-600">Scadenza Certificato Medico</th>
+                                <td colspan="3" class="text-xs">
+                                    <span class="font-bold text-slate-900">${scadenzaCertificato ? formatDateIT(scadenzaCertificato) : '-'}</span>
+                                    <span class="ml-1.5 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-${medStat.color}-50 text-${medStat.color}-700 border border-${medStat.color}-200">${medStat.label}</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- SEZIONE 3: NOTE VARIE -->
+                <div class="mb-8">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">3. Note Varie</h3>
+                    <div class="p-3.5 border border-slate-300 bg-slate-50/50 text-xs text-slate-800 min-h-[75px] whitespace-pre-wrap">${noteVarie || '<span class="text-slate-400 italic">Nessuna nota registrata.</span>'}</div>
+                </div>
+
+                <!-- PIE' DI PAGINA -->
+                <div class="pt-3 border-t border-slate-300 flex items-center justify-between text-[10px] text-slate-400">
+                    <span>Chinesi Center — Scheda Gestionale Socio</span>
+                    <span>Documento generato il ${dataStampa}</span>
+                </div>
+            `;
+
+            document.body.classList.add('printing-single-socio');
+
+            const cleanupPrint = () => {
+                document.body.classList.remove('printing-single-socio');
+                window.removeEventListener('afterprint', cleanupPrint);
+            };
+            window.addEventListener('afterprint', cleanupPrint);
+
+            setTimeout(() => {
+                window.print();
+                setTimeout(cleanupPrint, 1500);
+            }, 100);
+        };
+		
 
         window.exportCSV = function() {
             let csvContent = "\uFEFFNumero Tessera;Cognome;Nome;Data Nascita;Codice Fiscale;Telefono;Email;Tipo Abbonamento;Note Varie;Importo;Scadenza Tessera;Scadenza Abbonamento;Scadenza Certificato\n";
