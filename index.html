@@ -379,7 +379,7 @@
                     <select id="filterStatus" onchange="filterSoci()" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm">
                         <option value="all">Tutti gli stati</option>
                         <option value="sub_active">Abbonamento Attivo</option>
-                        <option value="sub_expired">Abbonamento Scaduto (Max 30g)</option>
+                        <option value="sub_expired">Abbonamento Scaduto</option>
                         <option value="med_expiring">Certificato in Scadenza</option>
                         <option value="med_expired">Certificato Scaduto</option>
                         <option value="card_expired">Tessera Scaduta</option>
@@ -475,9 +475,9 @@
                         <tbody id="archivioTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
-                <div id="emptyArchivioState" class="hidden p-12 text-center">
+				<div id="emptyArchivioState" class="hidden p-12 text-center">
                     <h4 class="text-slate-700 font-semibold text-base">L'archivio è vuoto</h4>
-                    <p class="text-xs text-slate-500 mt-1">I soci con abbonamento scaduto da più di 30 giorni appariranno qui.</p>
+                    <p class="text-xs text-slate-500 mt-1">I soci spostati manualmente in archivio appariranno qui.</p>
                 </div>
             </div>
         </div>
@@ -1318,11 +1318,25 @@ window.pulisciImporto = function(input) {
             else { return { status: 'active', label: 'Regolare (' + diffDays + 'g)', color: 'emerald', days: diffDays }; }
         };
 
-        // FUNZIONE CONTROLLO ARCHIVIO: Vero se l'abbonamento è scaduto da oltre 30 giorni (diffDays < -30)
-        window.isArchived = function(socio) {
-            if (!socio.scadenzaAbbonamento) return false;
-            const stat = getDateStatus(socio.scadenzaAbbonamento);
-            return stat.status === 'expired' && stat.days < -30;
+        // FUNZIONE CONTROLLO ARCHIVIO:
+        function isArchived(s) {
+            return s && s.archiviato === true;
+        }
+
+        window.archiviaSocio = function(id) {
+            const socio = window.soci.find(s => s.id === id);
+            if (!socio) return;
+            socio.archiviato = true;
+            persistSocio(socio);
+            showToast(`${socio.cognome} ${socio.nome} spostato in Archivio.`);
+        };
+
+        window.ripristinaSocio = function(id) {
+            const socio = window.soci.find(s => s.id === id);
+            if (!socio) return;
+            socio.archiviato = false;
+            persistSocio(socio);
+            showToast(`${socio.cognome} ${socio.nome} ripristinato in Anagrafica!`);
         };
 
         window.renderDashboard = function() {
@@ -1523,6 +1537,7 @@ window.pulisciImporto = function(input) {
                             <td class="py-2 px-1.5 text-center whitespace-nowrap bg-medical-50/25 border-r border-medical-100"><span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-${subStat.color}-50 text-${subStat.color}-700">${subStat.label}</span><div class="text-[11px] text-slate-700 mt-0.5">${formatDateIT(s.scadenzaAbbonamento)}</div></td>
                             <td class="py-2 pl-1.5 pr-3 text-right whitespace-nowrap no-print">
                                 <button onclick="openEditModal('${s.id}')" title="Modifica" class="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition"><i class="fa-solid fa-pen text-xs"></i></button>
+								<button onclick="archiviaSocio('${s.id}')" title="Sposta in Archivio" class="p-1.5 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition ml-1"><i class="fa-solid fa-box-archive text-xs"></i></button>
                                 <button onclick="deleteSocio('${s.id}')" title="Elimina" class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition ml-1"><i class="fa-solid fa-trash text-xs"></i></button>
                             </td>
                         </tr>`;
@@ -1531,46 +1546,73 @@ window.pulisciImporto = function(input) {
         };
 
         window.renderArchivioTable = function() {
-            const searchVal = document.getElementById('searchArchivioInput')?.value.toLowerCase() || '';
+            const searchInput = document.getElementById('searchArchivioInput');
+            const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
             const tbody = document.getElementById('archivioTableBody');
             const emptyState = document.getElementById('emptyArchivioState');
-            if(!tbody) return;
+            if (!tbody) return;
             tbody.innerHTML = '';
-            
-            const archivedSoci = window.soci.filter(s => {
-                if (!isArchived(s)) return false; // MOSTRA SOLO GLI ARCHIVIATI
-                const fullName = `${s.nome} ${s.cognome}`.toLowerCase();
-                return fullName.includes(searchVal);
+
+            const filtered = window.soci.filter(s => {
+                if (!isArchived(s)) return false;
+                const searchableText = `${s.nome} ${s.cognome} ${s.cognome} ${s.nome} ${s.numeroTessera || ''} ${s.tipoAbbonamento || ''}`.toLowerCase();
+                return searchableText.includes(searchVal);
             });
 
-            archivedSoci.sort((a, b) => {
+            const dir = (typeof sortDirectionArchivio !== 'undefined') ? sortDirectionArchivio : 'asc';
+            filtered.sort((a, b) => {
                 const nameA = `${a.cognome} ${a.nome}`.toLowerCase();
                 const nameB = `${b.cognome} ${b.nome}`.toLowerCase();
-                if (nameA < nameB) return sortDirectionArchivio === 'asc' ? -1 : 1;
-                if (nameA > nameB) return sortDirectionArchivio === 'asc' ? 1 : -1;
+                if (nameA < nameB) return dir === 'asc' ? -1 : 1;
+                if (nameA > nameB) return dir === 'asc' ? 1 : -1;
                 return 0;
             });
 
-            if (archivedSoci.length === 0) {
-                emptyState.classList.remove('hidden');
+            if (filtered.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
             } else {
-                emptyState.classList.add('hidden');
-                archivedSoci.forEach(s => {
+                if (emptyState) emptyState.classList.add('hidden');
+                filtered.forEach(s => {
                     const cardStat = getDateStatus(s.scadenzaTessera);
                     const medStat = getDateStatus(s.scadenzaCertificato);
+                    const subStat = getDateStatus(s.scadenzaAbbonamento);
+
+                    const tesseraTag = (s.numeroTessera !== null && s.numeroTessera !== undefined && s.numeroTessera !== '')
+                        ? `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200">N° ${s.numeroTessera}</span>`
+                        : '';
+
+                    const tipoAbbTag = s.tipoAbbonamento
+                        ? `<div class="mb-1"><span class="inline-flex items-center px-2 py-0.5 rounded-md bg-medical-50 text-medical-800 font-semibold text-[11px] border border-medical-200/80">${s.tipoAbbonamento}</span></div>`
+                        : '';
 
                     tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50 transition border-b border-slate-100 opacity-80">
-                            <td class="py-3 px-4 sm:px-6"><div class="font-bold text-slate-700 text-sm whitespace-nowrap">${s.cognome} ${s.nome}</div></td>
-                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700">${cardStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaTessera)}</div></td>
-                            <td class="py-3 px-3 text-center whitespace-nowrap"><span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-${medStat.color}-50 text-${medStat.color}-700">${medStat.label}</span><div class="text-xs text-slate-700 mt-1">${formatDateIT(s.scadenzaCertificato)}</div></td>
-                            <td class="py-3 px-3 text-center whitespace-nowrap">
-                                <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700"><i class="fa-solid fa-box-archive mr-1"></i> Archiviato</span>
-                                <div class="text-xs text-slate-500 mt-1">Scaduto il ${formatDateIT(s.scadenzaAbbonamento)}</div>
+                        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                            <td class="py-3 px-4 sm:px-6 whitespace-nowrap">
+                                <span class="font-bold text-slate-900 text-sm">${s.cognome} ${s.nome}</span>${tesseraTag}
                             </td>
-                            <td class="py-3 px-4 text-right whitespace-nowrap">
-                                <button onclick="openEditModal('${s.id}')" title="Ripristina / Modifica" class="p-2 rounded-xl bg-tealmed-50 text-tealmed-700 hover:bg-tealmed-100 transition"><i class="fa-solid fa-arrow-rotate-left text-xs"></i></button>
-                                <button onclick="deleteSocio('${s.id}')" title="Elimina defintivamente" class="p-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition ml-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                            <td class="py-3 px-3 sm:px-4 text-center whitespace-nowrap">
+                                <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-${cardStat.color}-50 text-${cardStat.color}-700">${cardStat.label}</span>
+                                <div class="text-[11px] text-slate-600 mt-0.5">${formatDateIT(s.scadenzaTessera)}</div>
+                            </td>
+                            <td class="py-3 px-3 sm:px-4 text-center whitespace-nowrap">
+                                <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-${medStat.color}-50 text-${medStat.color}-700">${medStat.label}</span>
+                                <div class="text-[11px] text-slate-600 mt-0.5">${formatDateIT(s.scadenzaCertificato)}</div>
+                            </td>
+                            <td class="py-3 px-3 sm:px-4 text-center whitespace-nowrap">
+                                ${tipoAbbTag}
+                                <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-${subStat.color}-50 text-${subStat.color}-700">${subStat.label}</span>
+                                <div class="text-[11px] text-slate-600 mt-0.5">${formatDateIT(s.scadenzaAbbonamento)}</div>
+                            </td>
+                            <td class="py-3 px-4 sm:px-6 text-right whitespace-nowrap no-print">
+                                <button onclick="ripristinaSocio('${s.id}')" title="Ripristina in Anagrafica" class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition">
+                                    <i class="fa-solid fa-rotate-left text-xs"></i>
+                                </button>
+                                <button onclick="openEditModal('${s.id}')" title="Modifica" class="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition ml-1">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="deleteSocio('${s.id}')" title="Elimina" class="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition ml-1">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
                             </td>
                         </tr>`;
                 });
@@ -1650,48 +1692,53 @@ window.openEditModal = function(id) {
 				};
 
 
-window.saveSocio = function(event) {
-            event.preventDefault();
-            const id = document.getElementById('socioId').value;
-            const newScadenzaCertificato = document.getElementById('scadenzaCertificato').value;
-            const numeroTesseraVal = document.getElementById('numeroTessera').value;
-            
-            const rawImporto = document.getElementById('importo').value.replace('€', '').replace(',', '.').trim();
-            const importoNum = rawImporto ? parseFloat(rawImporto) : null;
+		window.saveSocio = function(event) {
+					event.preventDefault();
+					const id = document.getElementById('socioId').value;
+					const newScadenzaCertificato = document.getElementById('scadenzaCertificato').value;
+					const numeroTesseraVal = document.getElementById('numeroTessera').value;
+					
+					const rawImporto = document.getElementById('importo').value.replace('€', '').replace(',', '.').trim();
+					const importoNum = rawImporto ? parseFloat(rawImporto) : null;
 
-            const rawImportoTessera = document.getElementById('importoTessera').value.replace('€', '').replace(',', '.').trim();
-            const importoTesseraNum = rawImportoTessera ? parseFloat(rawImportoTessera) : null;
-            
-            let avvisoData = document.getElementById('dataInvioAvvisoCertificato').value;
-            if (id) {
-                const oldSocio = window.soci.find(s => s.id === id);
-                if (oldSocio && oldSocio.scadenzaCertificato !== newScadenzaCertificato) { avvisoData = ""; }
-            }
+					const rawImportoTessera = document.getElementById('importoTessera').value.replace('€', '').replace(',', '.').trim();
+					const importoTesseraNum = rawImportoTessera ? parseFloat(rawImportoTessera) : null;
+					
+					let avvisoData = document.getElementById('dataInvioAvvisoCertificato').value;
+					let isSocioArchiviato = false;
+					if (id) {
+						const oldSocio = window.soci.find(s => s.id === id);
+						if (oldSocio) {
+							if (oldSocio.scadenzaCertificato !== newScadenzaCertificato) { avvisoData = ""; }
+							isSocioArchiviato = Boolean(oldSocio.archiviato);
+						}
+					}
 
-            const socioData = {
-                id: id || 'socio-' + Date.now(),
-                numeroTessera: numeroTesseraVal ? Number(numeroTesseraVal) : null,
-                nome: document.getElementById('nome').value.trim(),
-                cognome: document.getElementById('cognome').value.trim(),
-                dataNascita: document.getElementById('dataNascita').value,
-                codiceFiscale: document.getElementById('codiceFiscale').value.toUpperCase(),
-                telefono: document.getElementById('telefono').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                tipoAbbonamento: document.getElementById('tipoAbbonamento').value,
-                noteVarie: document.getElementById('noteVarie').value.trim(),
-                importo: !isNaN(importoNum) ? importoNum : null,
-                importoTessera: !isNaN(importoTesseraNum) ? importoTesseraNum : null,
-                metodoPagamento: document.getElementById('metodoPagamento').value || '',
-                scadenzaTessera: document.getElementById('scadenzaTessera').value,
-                scadenzaAbbonamento: document.getElementById('scadenzaAbbonamento').value,
-                scadenzaCertificato: newScadenzaCertificato,
-                dataInvioAvvisoCertificato: avvisoData
-            };
+					const socioData = {
+						id: id || 'socio-' + Date.now(),
+						numeroTessera: numeroTesseraVal ? Number(numeroTesseraVal) : null,
+						nome: document.getElementById('nome').value.trim(),
+						cognome: document.getElementById('cognome').value.trim(),
+						dataNascita: document.getElementById('dataNascita').value,
+						codiceFiscale: document.getElementById('codiceFiscale').value.toUpperCase(),
+						telefono: document.getElementById('telefono').value.trim(),
+						email: document.getElementById('email').value.trim(),
+						tipoAbbonamento: document.getElementById('tipoAbbonamento').value,
+						noteVarie: document.getElementById('noteVarie').value.trim(),
+						importo: !isNaN(importoNum) ? importoNum : null,
+						importoTessera: !isNaN(importoTesseraNum) ? importoTesseraNum : null,
+						metodoPagamento: document.getElementById('metodoPagamento').value || '',
+						scadenzaTessera: document.getElementById('scadenzaTessera').value,
+						scadenzaAbbonamento: document.getElementById('scadenzaAbbonamento').value,
+						scadenzaCertificato: newScadenzaCertificato,
+						dataInvioAvvisoCertificato: avvisoData,
+						archiviato: isSocioArchiviato
+					};
 
-            persistSocio(socioData);
-            closeModal();
-            showToast("Socio salvato con successo!");
-        };
+					persistSocio(socioData);
+					closeModal();
+					showToast("Socio salvato con successo!");
+				};
 
         window.showToast = function(message, type = "success") {
             const toast = document.getElementById('toast');
